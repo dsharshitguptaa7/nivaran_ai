@@ -1,0 +1,21 @@
+import enum
+
+
+class GrievanceStatus(str, enum.Enum):
+    SUBMITTED = "SUBMITTED"
+    AI_PROCESSING = "AI_PROCESSING"
+    PENDING_REVIEW = "PENDING_REVIEW"
+    ASSIGNED = "ASSIGNED"
+    IN_PROGRESS = "IN_PROGRESS"
+    AWAITING_INFORMATION = "AWAITING_INFORMATION"
+    ESCALATED = "ESCALATED"
+    RESOLVED = "RESOLVED"
+    CLOSED = "CLOSED"
+    REOPENED = "REOPENED"
+
+
+class GrievancePriority(str, enum.Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
