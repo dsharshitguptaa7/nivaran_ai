@@ -1,0 +1,321 @@
+id,title,description,category_label,is_synthetic,difficulty
+21,Registration update pending,PhD registration complete karne ke baad bhi portal par status pending hai.,Registration,True,hard
+12,Admission process delay,"Maine time par application submit ki thi, phir bhi process pending hai.",PhD_Admission,True,hard
+95,RAC case pending,Mera research case advisory committee action ka wait kar raha hai.,RAC,True,hard
+118,Degree committee problem,Meri proposal review process ka next step confirm nahi hua.,RDC,True,hard
+188,Viva date problem,Required formalities complete hain but examination date pending hai.,Viva,True,hard
+80,Course requirement problem,Required research course ki completion portal par update nahi hui.,Course_Work,True,hard
+163,Evaluation ka status,Meri thesis assessment process mein koi progress nahi dikh rahi.,Thesis_Evaluation,True,hard
+32,PhD registration delay,Formalities complete hone ke baad bhi registration process ruk gaya hai.,Registration,True,hard
+167,Thesis assessment,Please tell me the current status of my thesis evaluation.,Thesis_Evaluation,True,hard
+310,Unclassified problem,Meri request ka exact category decide nahi ho pa raha.,Other,True,hard
+238,Fee transaction problem,Payment successful hone ke baad acknowledgement nahi mila.,Fee,True,hard
+103,Committee approval pending,Proposal submit karne ke baad approval ka wait kar raha hoon.,RDC,True,hard
+275,Profile data problem,Mere official documents ke according portal information change karni hai.,Portal_Data_Correction,True,hard
+129,Paper verification delay,Journal paper ki checking ka process kaafi time se pending hai.,Publication_Verification,True,hard
+144,Thesis receipt pending,"Maine thesis submit ki thi, acknowledgement abhi tak nahi mila.",Thesis_Submission,True,hard
+162,Thesis review pending,Thesis submit hone ke baad evaluation ka update abhi tak nahi mila.,Thesis_Evaluation,True,hard
+287,IIGRS update,Complaint submit karne ke baad concerned authority se response nahi mila.,RTI_IIGRS,True,hard
+210,Part-time conversion,Required papers submit hain but full-time to part-time change reflect nahi hua.,FT_PT_Conversion,True,hard
+168,Thesis assessment,Kindly tell me the current status of my thesis evaluation.,Thesis_Evaluation,True,hard
+151,Thesis acknowledgement,Please confirm whether my final thesis has been received.,Thesis_Submission,True,hard
+73,Credits not showing,Mere completed research courses ke credits reflect nahi ho rahe.,Course_Work,True,hard
+243,Fellowship pending,Mera monthly research payment abhi tak receive nahi hua.,Fellowship,True,hard
+252,Monthly payment missing,Research scholarship ka expected amount account mein nahi aaya.,Fellowship,True,hard
+56,Supervisor problem,I need help regarding the person assigned to supervise my research.,Supervisor_Related,True,hard
+174,Thesis result delay,Thesis submit karne ke baad assessment ka response nahi aaya.,Thesis_Evaluation,True,hard
+290,RTI related problem,Kindly check the current status of my RTI matter.,RTI_IIGRS,True,hard
+198,Final examination problem,Doctoral completion ka final examination abhi schedule nahi hua.,Viva,True,hard
+299,IIGRS status problem,Portal par meri IIGRS request ka status change nahi hua.,RTI_IIGRS,True,hard
+49,Research guide details,Portal par supervisor ki information incorrect dikh rahi hai.,Supervisor_Related,True,hard
+179,Evaluation request,Please check why my thesis assessment has not progressed.,Thesis_Evaluation,True,hard
+232,Fee amount mismatch,Portal par jo amount hai woh meri actual payment se match nahi karta.,Fee,True,hard
+259,Payment delayed,My doctoral stipend has not been released as expected.,Fellowship,True,hard
+27,Registration request,"Maine registration ke liye request submit ki thi, koi update nahi mila.",Registration,True,hard
+13,Doctoral application problem,PhD ke admission se related request process nahi hui hai.,PhD_Admission,True,hard
+96,RAC case pending,Mera research case advisory committee action ka wait kar raha hai.,RAC,True,hard
+203,FT to PT pending,Meri research status conversion application abhi pending hai.,FT_PT_Conversion,True,hard
+91,RAC approval,RAC ke baad required update portal par nahi aaya.,RAC,True,hard
+230,Research fee problem,Current fee status galat show ho raha hai.,Fee,True,hard
+171,Review pending,Meri doctoral thesis abhi evaluation stage mein pending hai.,Thesis_Evaluation,True,hard
+247,Stipend issue,Pichle month ka research stipend bhi pending hai.,Fellowship,True,hard
+43,Supervisor assign nahi hua,PhD start karne ke baad bhi supervisor allocation ka update nahi mila.,Supervisor_Related,True,hard
+251,Monthly payment missing,Research scholarship ka expected amount account mein nahi aaya.,Fellowship,True,hard
+314,Doctoral administration problem,Mere research process mein ek unresolved administrative problem hai.,Other,True,hard
+34,Registration status,Mera doctoral registration abhi incomplete show ho raha hai.,Registration,True,hard
+116,RDC approval delay,Required documents submit karne ke baad bhi committee approval pending hai.,RDC,True,hard
+219,Status conversion delay,Conversion request dene ke baad concerned office se response nahi mila.,FT_PT_Conversion,True,hard
+286,RTI status,Submitted RTI request par abhi koi action update nahi hai.,RTI_IIGRS,True,hard
+137,Research output verification,Paper details provide karne ke baad bhi record pending hai.,Publication_Verification,True,hard
+42,Supervisor ka problem,Mere research supervisor ki details abhi clear nahi hain.,Supervisor_Related,True,hard
+258,Research scholarship,Mujhe fellowship payment ke regarding clarification chahiye.,Fellowship,True,hard
+72,Coursework pending,Maine coursework complete kar liya but system mein pending dikhta hai.,Course_Work,True,hard
+128,Publication proof,Required publication documents dene ke baad bhi confirmation nahi mili.,Publication_Verification,True,hard
+160,Thesis submitted,The university portal has not acknowledged my completed thesis submission.,Thesis_Submission,True,hard
+30,Portal registration problem,Registration karte waqt portal par issue aa raha hai.,Registration,True,hard
+197,Final examination issue,Doctoral completion ka final examination abhi schedule nahi hua.,Viva,True,hard
+55,Supervisor problem,I need help regarding the person assigned to supervise my research.,Supervisor_Related,True,hard
+312,Research office query,Concerned authority se ek general doctoral matter par clarification chahiye.,Other,True,hard
+121,Paper verification pending,"Maine publication proof submit kar diya hai, lekin verification abhi complete nahi hui.",Publication_Verification,True,hard
+227,Payment record,"Mere account se amount deduct hua, portal mein reflect nahi hai.",Fee,True,hard
+182,Viva kab hoga,Thesis process ke baad viva ki date abhi tak nahi mili.,Viva,True,hard
+304,General grievance,Research office se related ek issue hai jiske liye appropriate guidance chahiye.,Other,True,hard
+31,PhD registration delay,Formalities complete hone ke baad bhi registration process ruk gaya hai.,Registration,True,hard
+20,Admission status stuck,Meri application processing stage par hi atki hui hai.,PhD_Admission,True,hard
+92,RAC approval,RAC ke baad required update portal par nahi aaya.,RAC,True,hard
+236,Payment confirmation,Kindly verify my recent research fee transaction.,Fee,True,hard
+218,Research mode correction,Mere profile mein research mode abhi bhi purana hai.,FT_PT_Conversion,True,hard
+54,Guide approval pending,Research supervision se related approval abhi pending hai.,Supervisor_Related,True,hard
+23,Registration nahi ho rahi,Required details submit kar di hain lekin doctoral registration finalize nahi ho rahi.,Registration,True,hard
+242,Stipend nahi aayi,Is month ki fellowship abhi bank account mein credit nahi hui.,Fellowship,True,hard
+285,RTI status,Submitted RTI request par abhi koi action update nahi hai.,RTI_IIGRS,True,hard
+53,Guide approval pending,Research supervision se related approval abhi pending hai.,Supervisor_Related,True,hard
+76,Course record correction,Academic portal mein coursework ka data match nahi kar raha.,Course_Work,True,hard
+228,Payment record,"Mere account se amount deduct hua, portal mein reflect nahi hai.",Fee,True,hard
+192,Viva pending,Mera viva examination abhi arrange nahi hua.,Viva,True,hard
+36,Enrollment pending,Research programme ka enrollment confirm nahi hua.,Registration,True,hard
+176,Evaluation problem,Concerned office se thesis review ka koi update receive nahi hua.,Thesis_Evaluation,True,hard
+108,Proposal committee status,Mera submitted proposal abhi committee action ka wait kar raha hai.,RDC,True,hard
+306,Category unclear,Mera matter listed grievance types mein clearly fit nahi hota.,Other,True,hard
+320,Research grievance,I have an issue related to university research administration and need assistance.,Other,True,hard
+5,PhD application status,Portal par meri doctoral application ka status wahi ka wahi hai.,PhD_Admission,True,hard
+195,Viva confirmation,Mujhe viva voce ki date ya schedule receive nahi hua.,Viva,True,hard
+309,Unclassified issue,Meri request ka exact category decide nahi ho pa raha.,Other,True,hard
+224,Payment not reflected,University fee ka transaction successful hai but record update nahi hua.,Fee,True,hard
+25,Enrollment issue,Mera research enrollment record abhi tak update nahi hua.,Registration,True,hard
+81,RAC meeting nahi hui,Mere RAC ke next meeting ka schedule abhi tak nahi mila.,RAC,True,hard
+186,Viva update,Viva ke regarding koi confirmation nahi aayi.,Viva,True,hard
+161,Thesis review pending,Thesis submit hone ke baad evaluation ka update abhi tak nahi mila.,Thesis_Evaluation,True,hard
+313,Doctoral administration issue,Mere research process mein ek unresolved administrative problem hai.,Other,True,hard
+79,Course requirement issue,Required research course ki completion portal par update nahi hui.,Course_Work,True,hard
+248,Stipend problem,Pichle month ka research stipend bhi pending hai.,Fellowship,True,hard
+62,Course credits missing,Jo courses complete kiye the unka credit record mein nahi aa raha.,Course_Work,True,hard
+82,RAC meeting nahi hui,Mere RAC ke next meeting ka schedule abhi tak nahi mila.,RAC,True,hard
+317,Other matter,Mera case predefined categories se different hai aur review ki zarurat hai.,Other,True,hard
+106,RDC review problem,Research Degree Committee ke case mein koi progress nahi dikh rahi.,RDC,True,hard
+204,FT to PT pending,Meri research status conversion application abhi pending hai.,FT_PT_Conversion,True,hard
+37,Registration correction,Portal mein registration se related information sahi nahi dikh rahi.,Registration,True,hard
+191,Viva pending,Mera viva examination abhi arrange nahi hua.,Viva,True,hard
+90,RAC schedule,Kindly tell me when my research advisory meeting will be held.,RAC,True,hard
+22,Registration update pending,PhD registration complete karne ke baad bhi portal par status pending hai.,Registration,True,hard
+126,Research paper record,Published article ka record verify nahi hua hai.,Publication_Verification,True,hard
+213,FT PT issue,The requested change in my research mode has not been updated.,FT_PT_Conversion,True,hard
+269,Portal details wrong,Mere account mein incorrect information display ho rahi hai.,Portal_Data_Correction,True,hard
+250,Fellowship payment,Kindly check why my research fellowship has not been credited.,Fellowship,True,hard
+6,PhD application status,Portal par meri doctoral application ka status wahi ka wahi hai.,PhD_Admission,True,hard
+240,Fee correction,Mere doctoral fee record ko check karke update karna hai.,Fee,True,hard
+216,Conversion approval,Part-time conversion ke approval ka wait kar raha hoon.,FT_PT_Conversion,True,hard
+83,Committee meeting pending,Research committee ke saamne meri case review ki date confirm nahi hui.,RAC,True,hard
+298,RTI response problem,RTI submission ka expected response abhi receive nahi hua.,RTI_IIGRS,True,hard
+175,Evaluation issue,Concerned office se thesis review ka koi update receive nahi hua.,Thesis_Evaluation,True,hard
+115,RDC approval delay,Required documents submit karne ke baad bhi committee approval pending hai.,RDC,True,hard
+278,Research portal correction,Incorrect details ki wajah se official record affected ho sakta hai.,Portal_Data_Correction,True,hard
+8,Admission approval problem,Required formalities complete hain but confirmation abhi receive nahi hui.,PhD_Admission,True,hard
+185,Viva update,Viva ke regarding koi confirmation nahi aayi.,Viva,True,hard
+284,IIGRS complaint,Meri IIGRS grievance ka status kaafi time se pending hai.,RTI_IIGRS,True,hard
+148,Thesis portal problem,Portal par meri submitted thesis visible nahi ho rahi.,Thesis_Submission,True,hard
+180,Evaluation request,Kindly check why my thesis assessment has not progressed.,Thesis_Evaluation,True,hard
+302,Research related problem,Meri problem doctoral administration se related hai but available options mein exact category nahi mil rahi.,Other,True,hard
+270,Portal details wrong,Mere account mein incorrect information display ho rahi hai.,Portal_Data_Correction,True,hard
+143,Thesis receipt pending,"Maine thesis submit ki thi, acknowledgement abhi tak nahi mila.",Thesis_Submission,True,hard
+291,Grievance response pending,IIGRS ke through request raise ki thi but update nahi mila.,RTI_IIGRS,True,hard
+229,Research fee problem,Current fee status galat show ho raha hai.,Fee,True,hard
+189,Doctoral defense,Please update me about the next step for my viva.,Viva,True,hard
+172,Review pending,Meri doctoral thesis abhi evaluation stage mein pending hai.,Thesis_Evaluation,True,hard
+153,Doctoral thesis issue,"Required thesis documents de diye hain, record mein submission missing hai.",Thesis_Submission,True,hard
+166,Thesis checking delayed,Submitted thesis ke review ka result pending hai.,Thesis_Evaluation,True,hard
+145,Final submission issue,Thesis ke final documents submit hain but status update nahi hua.,Thesis_Submission,True,hard
+50,Research guide details,Portal par supervisor ki information incorrect dikh rahi hai.,Supervisor_Related,True,hard
+38,Registration correction,Portal mein registration se related information sahi nahi dikh rahi.,Registration,True,hard
+35,Enrollment pending,Research programme ka enrollment confirm nahi hua.,Registration,True,hard
+24,Registration nahi ho rahi,Required details submit kar di hain lekin doctoral registration finalize nahi ho rahi.,Registration,True,hard
+156,Thesis upload pending,Upload successful tha lekin system mein thesis submit nahi dikh rahi.,Thesis_Submission,True,hard
+149,Thesis submission status,Submission ke baad next stage ka update nahi mila.,Thesis_Submission,True,hard
+11,Admission process delay,"Maine time par application submit ki thi, phir bhi process pending hai.",PhD_Admission,True,hard
+67,Course marks problem,Ek completed course ka result/marks academic record mein missing hai.,Course_Work,True,hard
+29,Portal registration problem,Registration karte waqt portal par issue aa raha hai.,Registration,True,hard
+125,Research paper record,Published article ka record verify nahi hua hai.,Publication_Verification,True,hard
+200,Viva status,The status of my viva examination has not been communicated.,Viva,True,hard
+138,Research output verification,Paper details provide karne ke baad bhi record pending hai.,Publication_Verification,True,hard
+276,Profile data problem,Mere official documents ke according portal information change karni hai.,Portal_Data_Correction,True,hard
+239,Fee correction,Mere doctoral fee record ko check karke update karna hai.,Fee,True,hard
+113,RDC decision,Please check the status of my case submitted for committee review.,RDC,True,hard
+70,Course registration problem,Research coursework ke liye registration mein problem aa rahi hai.,Course_Work,True,hard
+133,Article verification,Please check the verification request for my research article.,Publication_Verification,True,hard
+101,RDC ka update nahi,Mere research proposal ke committee review ka result abhi tak nahi aaya.,RDC,True,hard
+253,Fellowship status,Portal par fellowship ka status update nahi hai.,Fellowship,True,hard
+263,Profile correction,Portal mein jo academic information hai usmein mistake hai.,Portal_Data_Correction,True,hard
+86,RAC update,RAC se related meri request ka status pending hai.,RAC,True,hard
+233,Fee pending,Research fee submit karne ke baad bhi system mein pending aa raha hai.,Fee,True,hard
+295,IIGRS case,My grievance submitted through IIGRS is still awaiting action.,RTI_IIGRS,True,hard
+237,Fee transaction issue,Payment successful hone ke baad acknowledgement nahi mila.,Fee,True,hard
+241,Stipend nahi aayi,Is month ki fellowship abhi bank account mein credit nahi hui.,Fellowship,True,hard
+268,Record mismatch,Official documents aur portal record mein difference aa raha hai.,Portal_Data_Correction,True,hard
+152,Thesis acknowledgement,Kindly confirm whether my final thesis has been received.,Thesis_Submission,True,hard
+123,Publication check issue,Mere paper ka verification status portal par update nahi hai.,Publication_Verification,True,hard
+217,Research mode correction,Mere profile mein research mode abhi bhi purana hai.,FT_PT_Conversion,True,hard
+132,Publication status,Meri publication academic record mein verified nahi show ho rahi.,Publication_Verification,True,hard
+139,Publication confirmation,I need confirmation that my submitted publication has been verified.,Publication_Verification,True,hard
+93,Committee recommendation pending,Meeting/review ke baad recommendations record mein nahi hain.,RAC,True,hard
+277,Research portal correction,Incorrect details ki wajah se official record affected ho sakta hai.,Portal_Data_Correction,True,hard
+274,Academic record error,Doctoral portal par mera record outdated hai.,Portal_Data_Correction,True,hard
+63,Coursework update,Meri coursework details portal par incomplete show ho rahi hain.,Course_Work,True,hard
+307,Other research problem,I need help with an administrative research issue that is not covered above.,Other,True,hard
+267,Record mismatch,Official documents aur portal record mein difference aa raha hai.,Portal_Data_Correction,True,hard
+220,Status conversion delay,Conversion request dene ke baad concerned office se response nahi mila.,FT_PT_Conversion,True,hard
+305,Category unclear,Mera matter listed grievance types mein clearly fit nahi hota.,Other,True,hard
+283,IIGRS complaint,Meri IIGRS grievance ka status kaafi time se pending hai.,RTI_IIGRS,True,hard
+131,Publication status,Meri publication academic record mein verified nahi show ho rahi.,Publication_Verification,True,hard
+102,RDC ka update nahi,Mere research proposal ke committee review ka result abhi tak nahi aaya.,RDC,True,hard
+51,Supervisor allocation,Mere case mein supervisor assign hone ka process complete nahi hua.,Supervisor_Related,True,hard
+98,RAC related grievance,RAC process mein delay ki wajah se research timeline affect ho rahi hai.,RAC,True,hard
+201,Research mode change,"Maine full-time se part-time conversion ke liye request di thi, update nahi mila.",FT_PT_Conversion,True,hard
+318,Other matter,Mera case predefined categories se different hai aur review ki zarurat hai.,Other,True,hard
+255,Stipend processing,Required formalities complete hain but fellowship payment pending hai.,Fellowship,True,hard
+196,Viva confirmation,Mujhe viva voce ki date ya schedule receive nahi hua.,Viva,True,hard
+170,Evaluation update nahi,"Thesis evaluation complete hui ya nahi, portal par clear nahi hai.",Thesis_Evaluation,True,hard
+266,Data update,Maine correction request di thi but profile abhi tak update nahi hui.,Portal_Data_Correction,True,hard
+173,Thesis result delay,Thesis submit karne ke baad assessment ka response nahi aaya.,Thesis_Evaluation,True,hard
+14,Doctoral application problem,PhD ke admission se related request process nahi hui hai.,PhD_Admission,True,hard
+202,Research mode change,"Maine full-time se part-time conversion ke liye request di thi, update nahi mila.",FT_PT_Conversion,True,hard
+315,General request,Please guide me regarding a research-related issue not represented in the portal.,Other,True,hard
+221,Fee paid but pending,"Payment kar diya tha, portal abhi bhi amount due dikha raha hai.",Fee,True,hard
+289,RTI related issue,Please check the current status of my RTI matter.,RTI_IIGRS,True,hard
+193,Defense date,Thesis evaluation ke baad viva ki scheduling ka wait hai.,Viva,True,hard
+222,Fee paid but pending,"Payment kar diya tha, portal abhi bhi amount due dikha raha hai.",Fee,True,hard
+208,Conversion request,Doctoral study mode change karne ki request process nahi hui.,FT_PT_Conversion,True,hard
+135,Publication related issue,"Publication submit ki thi, concerned office se verification update nahi aaya.",Publication_Verification,True,hard
+9,PhD joining confirmation,Mujhe PhD admission ke baad next step ki confirmation nahi mili.,PhD_Admission,True,hard
+78,Coursework query,Kindly check my completed coursework record.,Course_Work,True,hard
+59,Supervisor request delay,Concerned office ko request dene ke baad bhi koi response nahi mila.,Supervisor_Related,True,hard
+207,Conversion request,Doctoral study mode change karne ki request process nahi hui.,FT_PT_Conversion,True,hard
+288,IIGRS update,Complaint submit karne ke baad concerned authority se response nahi mila.,RTI_IIGRS,True,hard
+273,Academic record error,Doctoral portal par mera record outdated hai.,Portal_Data_Correction,True,hard
+120,RDC case,The committee has not communicated the outcome of my research proposal.,RDC,True,hard
+165,Thesis checking delayed,Submitted thesis ke review ka result pending hai.,Thesis_Evaluation,True,hard
+297,RTI response issue,RTI submission ka expected response abhi receive nahi hua.,RTI_IIGRS,True,hard
+64,Coursework update,Meri coursework details portal par incomplete show ho rahi hain.,Course_Work,True,hard
+109,RDC meeting update,RDC ke regarding meeting ya decision ki information nahi mili.,RDC,True,hard
+157,Final thesis process,Meri thesis submission abhi processing mein atki hui hai.,Thesis_Submission,True,hard
+142,Thesis submit kar di,Final thesis upload karne ke baad bhi portal par submission confirm nahi ho rahi.,Thesis_Submission,True,hard
+281,RTI request pending,"Maine RTI matter submit kiya tha, response abhi tak nahi mila.",RTI_IIGRS,True,hard
+89,RAC schedule,Please tell me when my research advisory meeting will be held.,RAC,True,hard
+211,Research status update,Mujhe apne doctoral status conversion ka current status chahiye.,FT_PT_Conversion,True,hard
+265,Data update,Maine correction request di thi but profile abhi tak update nahi hui.,Portal_Data_Correction,True,hard
+45,Guide related problem,Research guide ke regarding meri request pending hai.,Supervisor_Related,True,hard
+261,Portal mein naam galat,Mere research profile par personal details official document se different hain.,Portal_Data_Correction,True,hard
+205,Study mode issue,Portal mein old research mode show ho raha hai.,FT_PT_Conversion,True,hard
+264,Profile correction,Portal mein jo academic information hai usmein mistake hai.,Portal_Data_Correction,True,hard
+66,Research classes problem,Required classes complete karne ke baad bhi record update nahi hua.,Course_Work,True,hard
+61,Course credits missing,Jo courses complete kiye the unka credit record mein nahi aa raha.,Course_Work,True,hard
+94,Committee recommendation pending,Meeting/review ke baad recommendations record mein nahi hain.,RAC,True,hard
+294,RTI processing delay,Mera request prescribed channel se submit hai but process nahi hua.,RTI_IIGRS,True,hard
+280,Portal update pending,Correction submit karne ke baad bhi old information show ho rahi hai.,Portal_Data_Correction,True,hard
+300,IIGRS status problem,Portal par meri IIGRS request ka status change nahi hua.,RTI_IIGRS,True,hard
+246,Scholarship delay,"Fellowship release hone ka wait hai, status clear nahi hai.",Fellowship,True,hard
+282,RTI request pending,"Maine RTI matter submit kiya tha, response abhi tak nahi mila.",RTI_IIGRS,True,hard
+158,Final thesis process,Meri thesis submission abhi processing mein atki hui hai.,Thesis_Submission,True,hard
+164,Evaluation ka status,Meri thesis assessment process mein koi progress nahi dikh rahi.,Thesis_Evaluation,True,hard
+1,Admission update nahi hua,"Maine PhD ke liye apply kiya tha, documents bhi submit hain, lekin abhi tak admission ka koi final update nahi aaya.",PhD_Admission,True,hard
+178,Thesis assessment status,The evaluation of my submitted thesis is taking longer than expected.,Thesis_Evaluation,True,hard
+46,Guide related problem,Research guide ke regarding meri request pending hai.,Supervisor_Related,True,hard
+154,Doctoral thesis problem,"Required thesis documents de diye hain, record mein submission missing hai.",Thesis_Submission,True,hard
+41,Supervisor ka issue,Mere research supervisor ki details abhi clear nahi hain.,Supervisor_Related,True,hard
+60,Supervisor request delay,Concerned office ko request dene ke baad bhi koi response nahi mila.,Supervisor_Related,True,hard
+16,Admission documents submitted,"Saare papers de diye the, par admission record update nahi hua.",PhD_Admission,True,hard
+47,Supervisor change request,"Maine guide change karne ke liye application di thi, status nahi pata.",Supervisor_Related,True,hard
+87,Advisory committee issue,"Maine required research material diya tha, lekin RAC process aage nahi badha.",RAC,True,hard
+110,RDC meeting update,RDC ke regarding meeting ya decision ki information nahi mili.,RDC,True,hard
+105,RDC review issue,Research Degree Committee ke case mein koi progress nahi dikh rahi.,RDC,True,hard
+134,Article verification,Kindly check the verification request for my research article.,Publication_Verification,True,hard
+17,PhD admission query,"Please check my doctoral admission request, it is still waiting for action.",PhD_Admission,True,hard
+296,IIGRS case,My grievance submitted through IIGRS is still awaiting action.,RTI_IIGRS,True,hard
+194,Defense date,Thesis evaluation ke baad viva ki scheduling ka wait hai.,Viva,True,hard
+235,Payment confirmation,Please verify my recent research fee transaction.,Fee,True,hard
+117,Degree committee issue,Meri proposal review process ka next step confirm nahi hua.,RDC,True,hard
+293,RTI processing delay,Mera request prescribed channel se submit hai but process nahi hua.,RTI_IIGRS,True,hard
+75,Course record correction,Academic portal mein coursework ka data match nahi kar raha.,Course_Work,True,hard
+111,Research proposal pending,Committee level par mera research matter abhi clear nahi hua.,RDC,True,hard
+190,Doctoral defense,Kindly update me about the next step for my viva.,Viva,True,hard
+146,Final submission problem,Thesis ke final documents submit hain but status update nahi hua.,Thesis_Submission,True,hard
+39,Research registration issue,Please check why my registration request has not moved forward.,Registration,True,hard
+28,Registration request,"Maine registration ke liye request submit ki thi, koi update nahi mila.",Registration,True,hard
+183,Defense schedule pending,Mera doctoral defense schedule nahi hua hai.,Viva,True,hard
+141,Thesis submit kar di,Final thesis upload karne ke baad bhi portal par submission confirm nahi ho rahi.,Thesis_Submission,True,hard
+199,Viva status,The status of my viva examination has not been communicated.,Viva,True,hard
+122,Paper verification pending,"Maine publication proof submit kar diya hai, lekin verification abhi complete nahi hui.",Publication_Verification,True,hard
+212,Research status update,Mujhe apne doctoral status conversion ka current status chahiye.,FT_PT_Conversion,True,hard
+319,Research grievance,I have an issue related to university research administration and need assistance.,Other,True,hard
+15,Admission documents submitted,"Saare papers de diye the, par admission record update nahi hua.",PhD_Admission,True,hard
+88,Advisory committee problem,"Maine required research material diya tha, lekin RAC process aage nahi badha.",RAC,True,hard
+10,PhD joining confirmation,Mujhe PhD admission ke baad next step ki confirmation nahi mili.,PhD_Admission,True,hard
+7,Admission approval issue,Required formalities complete hain but confirmation abhi receive nahi hui.,PhD_Admission,True,hard
+223,Payment not reflected,University fee ka transaction successful hai but record update nahi hua.,Fee,True,hard
+249,Fellowship payment,Please check why my research fellowship has not been credited.,Fellowship,True,hard
+244,Fellowship pending,Mera monthly research payment abhi tak receive nahi hua.,Fellowship,True,hard
+257,Research scholarship,Mujhe fellowship payment ke regarding clarification chahiye.,Fellowship,True,hard
+260,Payment delayed,My doctoral stipend has not been released as expected.,Fellowship,True,hard
+262,Portal mein naam galat,Mere research profile par personal details official document se different hain.,Portal_Data_Correction,True,hard
+104,Committee approval pending,Proposal submit karne ke baad approval ka wait kar raha hoon.,RDC,True,hard
+150,Thesis submission status,Submission ke baad next stage ka update nahi mila.,Thesis_Submission,True,hard
+140,Publication confirmation,I need confirmation that my submitted publication has been verified.,Publication_Verification,True,hard
+68,Course marks problem,Ek completed course ka result/marks academic record mein missing hai.,Course_Work,True,hard
+4,Doctoral admission pending,Application complete karne ke baad bhi mera admission process aage nahi badh raha hai.,PhD_Admission,True,hard
+57,Supervision record,Mere doctoral record mein supervisor details update nahi hui hain.,Supervisor_Related,True,hard
+234,Fee pending,Research fee submit karne ke baad bhi system mein pending aa raha hai.,Fee,True,hard
+52,Supervisor allocation,Mere case mein supervisor assign hone ka process complete nahi hua.,Supervisor_Related,True,hard
+2,Admission update nahi hua,"Maine PhD ke liye apply kiya tha, documents bhi submit hain, lekin abhi tak admission ka koi final update nahi aaya.",PhD_Admission,True,hard
+19,Admission status stuck,Meri application processing stage par hi atki hui hai.,PhD_Admission,True,hard
+26,Enrollment problem,Mera research enrollment record abhi tak update nahi hua.,Registration,True,hard
+184,Defense schedule pending,Mera doctoral defense schedule nahi hua hai.,Viva,True,hard
+187,Viva date issue,Required formalities complete hain but examination date pending hai.,Viva,True,hard
+44,Supervisor assign nahi hua,PhD start karne ke baad bhi supervisor allocation ka update nahi mila.,Supervisor_Related,True,hard
+130,Paper verification delay,Journal paper ki checking ka process kaafi time se pending hai.,Publication_Verification,True,hard
+245,Scholarship delay,"Fellowship release hone ka wait hai, status clear nahi hai.",Fellowship,True,hard
+256,Stipend processing,Required formalities complete hain but fellowship payment pending hai.,Fellowship,True,hard
+271,Personal information issue,Please correct the details shown in my research profile.,Portal_Data_Correction,True,hard
+301,Research related issue,Meri problem doctoral administration se related hai but available options mein exact category nahi mil rahi.,Other,True,hard
+155,Thesis upload pending,Upload successful tha lekin system mein thesis submit nahi dikh rahi.,Thesis_Submission,True,hard
+71,Coursework pending,Maine coursework complete kar liya but system mein pending dikhta hai.,Course_Work,True,hard
+292,Grievance response pending,IIGRS ke through request raise ki thi but update nahi mila.,RTI_IIGRS,True,hard
+159,Thesis submitted,The university portal has not acknowledged my completed thesis submission.,Thesis_Submission,True,hard
+303,General grievance,Research office se related ek issue hai jiske liye appropriate guidance chahiye.,Other,True,hard
+272,Personal information problem,Kindly correct the details shown in my research profile.,Portal_Data_Correction,True,hard
+147,Thesis portal problem,Portal par meri submitted thesis visible nahi ho rahi.,Thesis_Submission,True,hard
+206,Study mode problem,Portal mein old research mode show ho raha hai.,FT_PT_Conversion,True,hard
+279,Portal update pending,Correction submit karne ke baad bhi old information show ho rahi hai.,Portal_Data_Correction,True,hard
+65,Research classes issue,Required classes complete karne ke baad bhi record update nahi hua.,Course_Work,True,hard
+316,General request,Kindly guide me regarding a research-related issue not represented in the portal.,Other,True,hard
+169,Evaluation update nahi,"Thesis evaluation complete hui ya nahi, portal par clear nahi hai.",Thesis_Evaluation,True,hard
+77,Coursework query,Please check my completed coursework record.,Course_Work,True,hard
+119,RDC case,The committee has not communicated the outcome of my research proposal.,RDC,True,hard
+214,FT PT problem,The requested change in my research mode has not been updated.,FT_PT_Conversion,True,hard
+181,Viva kab hoga,Thesis process ke baad viva ki date abhi tak nahi mili.,Viva,True,hard
+100,Advisory review problem,Concerned committee se meri research review ka update nahi mila.,RAC,True,hard
+136,Publication related problem,"Publication submit ki thi, concerned office se verification update nahi aaya.",Publication_Verification,True,hard
+177,Thesis assessment status,The evaluation of my submitted thesis is taking longer than expected.,Thesis_Evaluation,True,hard
+308,Other research problem,I need help with an administrative research issue that is not covered above.,Other,True,hard
+85,RAC update,RAC se related meri request ka status pending hai.,RAC,True,hard
+40,Research registration problem,Kindly check why my registration request has not moved forward.,Registration,True,hard
+3,Doctoral admission pending,Application complete karne ke baad bhi mera admission process aage nahi badh raha hai.,PhD_Admission,True,hard
+69,Course registration issue,Research coursework ke liye registration mein problem aa rahi hai.,Course_Work,True,hard
+209,Part-time conversion,Required papers submit hain but full-time to part-time change reflect nahi hua.,FT_PT_Conversion,True,hard
+311,Research office query,Concerned authority se ek general doctoral matter par clarification chahiye.,Other,True,hard
+254,Fellowship status,Portal par fellowship ka status update nahi hai.,Fellowship,True,hard
+112,Research proposal pending,Committee level par mera research matter abhi clear nahi hua.,RDC,True,hard
+225,Fee receipt issue,Fee jama karne ke baad receipt generate nahi hui.,Fee,True,hard
+33,Registration status,Mera doctoral registration abhi incomplete show ho raha hai.,Registration,True,hard
+74,Credits not showing,Mere completed research courses ke credits reflect nahi ho rahe.,Course_Work,True,hard
+48,Supervisor change request,"Maine guide change karne ke liye application di thi, status nahi pata.",Supervisor_Related,True,hard
+127,Publication proof,Required publication documents dene ke baad bhi confirmation nahi mili.,Publication_Verification,True,hard
+114,RDC decision,Kindly check the status of my case submitted for committee review.,RDC,True,hard
+97,RAC related grievance,RAC process mein delay ki wajah se research timeline affect ho rahi hai.,RAC,True,hard
+226,Fee receipt problem,Fee jama karne ke baad receipt generate nahi hui.,Fee,True,hard
+215,Conversion approval,Part-time conversion ke approval ka wait kar raha hoon.,FT_PT_Conversion,True,hard
+58,Supervision record,Mere doctoral record mein supervisor details update nahi hui hain.,Supervisor_Related,True,hard
+124,Publication check problem,Mere paper ka verification status portal par update nahi hai.,Publication_Verification,True,hard
+107,Proposal committee status,Mera submitted proposal abhi committee action ka wait kar raha hai.,RDC,True,hard
+84,Committee meeting pending,Research committee ke saamne meri case review ki date confirm nahi hui.,RAC,True,hard
+18,PhD admission query,"Kindly check my doctoral admission request, it is still waiting for action.",PhD_Admission,True,hard
+231,Fee amount mismatch,Portal par jo amount hai woh meri actual payment se match nahi karta.,Fee,True,hard
+99,Advisory review issue,Concerned committee se meri research review ka update nahi mila.,RAC,True,hard

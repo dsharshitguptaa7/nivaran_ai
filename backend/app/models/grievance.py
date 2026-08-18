@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     DateTime,
+    Boolean,
     Enum,
     ForeignKey,
     Numeric,
@@ -57,11 +58,23 @@ class Grievance(Base):
         index=True,
     )
 
-    cluster_id: Mapped[uuid.UUID | None] = mapped_column(
+    final_category_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("clusters.id"),
+        ForeignKey("categories.id"),
         nullable=True,
         index=True,
+    )
+
+    category_reviewed: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+
+    category_overridden: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
     )
 
     status: Mapped[GrievanceStatus] = mapped_column(
@@ -111,6 +124,19 @@ class Grievance(Base):
         nullable=False,
     )
 
+    last_action_at: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True),
+    default=lambda: datetime.now(timezone.utc),
+    nullable=False,
+    index=True,
+    )
+
+    last_reminder_at: Mapped[datetime | None] = mapped_column(
+    DateTime(timezone=True),
+    nullable=True,
+    index=True,
+    )
+
     applicant = relationship(
         "User",
         foreign_keys=[applicant_id],
@@ -121,7 +147,7 @@ class Grievance(Base):
         foreign_keys=[category_id],
     )
 
-    cluster = relationship(
-        "Cluster",
-        foreign_keys=[cluster_id],
+    final_category = relationship(
+        "Category",
+        foreign_keys=[final_category_id],
     )

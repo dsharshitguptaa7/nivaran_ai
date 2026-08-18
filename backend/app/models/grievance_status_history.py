@@ -1,3 +1,4 @@
+import enum
 import uuid
 from datetime import datetime, timezone
 
@@ -8,6 +9,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.database import Base
 
 from app.models.enums import GrievanceStatus
+
+class HistoryActorType(str, enum.Enum):
+    USER = "USER"
+    SYSTEM = "SYSTEM"
 
 
 class GrievanceStatusHistory(Base):
@@ -44,11 +49,20 @@ class GrievanceStatusHistory(Base):
         nullable=False,
     )
 
-    changed_by: Mapped[uuid.UUID] = mapped_column(
+    changed_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
-        nullable=False,
+        nullable=True,
         index=True,
+    )
+
+    actor_type: Mapped[HistoryActorType] = mapped_column(
+    Enum(
+        HistoryActorType,
+        name="history_actor_type",
+    ),
+    nullable=False,
+    default=HistoryActorType.USER,
     )
 
     reason: Mapped[str | None] = mapped_column(

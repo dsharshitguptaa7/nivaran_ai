@@ -1,6 +1,5 @@
 from app.models.user import User, UserRole
 from app.models.category import Category
-from app.models.cluster import Cluster
 from app.models.grievance import (
     Grievance,
     GrievancePriority,

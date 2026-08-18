@@ -2,7 +2,15 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import (
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -49,13 +57,6 @@ class AIProcessingRecord(Base):
         index=True,
     )
 
-    predicted_cluster_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("clusters.id"),
-        nullable=True,
-        index=True,
-    )
-
     confidence_score: Mapped[float | None] = mapped_column(
         Numeric(5, 4),
         nullable=True,
@@ -67,7 +68,11 @@ class AIProcessingRecord(Base):
     )
 
     status: Mapped[AIProcessingStatus] = mapped_column(
-        Enum(AIProcessingStatus, name="ai_processing_status"),
+        Enum(
+            AIProcessingStatus,
+            name="ai_processing_status",
+            create_type=False,
+        ),
         nullable=False,
         default=AIProcessingStatus.PENDING,
     )
@@ -91,9 +96,4 @@ class AIProcessingRecord(Base):
     predicted_category = relationship(
         "Category",
         foreign_keys=[predicted_category_id],
-    )
-
-    predicted_cluster = relationship(
-        "Cluster",
-        foreign_keys=[predicted_cluster_id],
     )

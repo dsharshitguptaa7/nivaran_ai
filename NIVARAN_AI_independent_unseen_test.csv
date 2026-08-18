@@ -1,0 +1,161 @@
+id,title,description,category_label,is_synthetic,evaluation_set
+1,Admission status not updated,"I completed my doctoral admission formalities, but the university has not updated my application status.",PhD_Admission,True,independent_unseen
+2,Pending doctoral admission,My PhD admission request is still awaiting approval even though all required documents were submitted.,PhD_Admission,True,independent_unseen
+3,Admission document issue,"The documents submitted for my PhD admission have been verified, but my admission is not showing as confirmed.",PhD_Admission,True,independent_unseen
+4,PhD admission delay,I have not received confirmation regarding my doctoral admission after completing the required process.,PhD_Admission,True,independent_unseen
+5,Admission application issue,My application for admission to the PhD programme appears to be stuck at the processing stage.,PhD_Admission,True,independent_unseen
+6,Doctoral admission confirmation,I need an update on the confirmation of my PhD admission application.,PhD_Admission,True,independent_unseen
+7,Admission verification pending,My doctoral admission is awaiting verification and I have not received any further communication.,PhD_Admission,True,independent_unseen
+8,PhD admission portal issue,The research portal does not show the current status of my submitted PhD admission application.,PhD_Admission,True,independent_unseen
+9,Admission approval request,Please check why my PhD admission approval has not been issued yet.,PhD_Admission,True,independent_unseen
+10,PhD admission process,I completed the admission requirements but the final admission status remains pending.,PhD_Admission,True,independent_unseen
+11,Research registration pending,My doctoral registration has not been completed despite submitting the required information.,Registration,True,independent_unseen
+12,Registration status issue,The portal still shows my PhD registration as incomplete.,Registration,True,independent_unseen
+13,Enrollment problem,I am unable to finish my research enrollment because the registration process is not progressing.,Registration,True,independent_unseen
+14,Registration request delayed,My request to register for the doctoral programme has been pending for several days.,Registration,True,independent_unseen
+15,PhD registration correction,The registration record associated with my research programme is not showing the submitted details.,Registration,True,independent_unseen
+16,Registration error,An error appears when I try to complete my PhD registration.,Registration,True,independent_unseen
+17,Doctoral enrollment status,Please update the status of my doctoral registration in the university system.,Registration,True,independent_unseen
+18,Registration formalities,I completed the registration formalities but have not received confirmation.,Registration,True,independent_unseen
+19,Research registration issue,My research registration is still awaiting processing by the concerned office.,Registration,True,independent_unseen
+20,Enrollment record problem,My doctoral enrollment record has not been updated after submission.,Registration,True,independent_unseen
+21,Supervisor not assigned,A research supervisor has not yet been assigned to me for my doctoral work.,Supervisor_Related,True,independent_unseen
+22,Supervisor allocation pending,My request for allocation of a PhD supervisor is still awaiting action.,Supervisor_Related,True,independent_unseen
+23,Supervisor change request,I submitted a request to change my research supervisor and need an update on it.,Supervisor_Related,True,independent_unseen
+24,Supervision issue,There is an issue with the supervisor information recorded for my research programme.,Supervisor_Related,True,independent_unseen
+25,Supervisor details incorrect,The supervisor shown in my research record is not the person assigned to my work.,Supervisor_Related,True,independent_unseen
+26,Supervisor assignment delay,I have completed the required process but my supervisor allocation remains unresolved.,Supervisor_Related,True,independent_unseen
+27,Research guidance issue,I need assistance regarding the supervision arrangement for my doctoral research.,Supervisor_Related,True,independent_unseen
+28,Supervisor record update,The portal has not been updated with my approved supervisor details.,Supervisor_Related,True,independent_unseen
+29,Supervisor-related request,Please review my pending request concerning the allocation of my research supervisor.,Supervisor_Related,True,independent_unseen
+30,Doctoral supervision problem,My doctoral supervision arrangement needs to be reviewed by the concerned authority.,Supervisor_Related,True,independent_unseen
+31,Course credits missing,The credits I completed as part of my doctoral coursework are not appearing in my academic record.,Course_Work,True,independent_unseen
+32,Coursework status issue,My coursework completion status has not been updated in the research portal.,Course_Work,True,independent_unseen
+33,Course registration problem,I am facing difficulty registering for the coursework required for my PhD.,Course_Work,True,independent_unseen
+34,Course marks missing,The marks for a completed research course are absent from my academic record.,Course_Work,True,independent_unseen
+35,Coursework completion,I finished the required classes but the system still shows coursework as incomplete.,Course_Work,True,independent_unseen
+36,Course credit correction,Please correct the coursework credits shown against my research programme.,Course_Work,True,independent_unseen
+37,Research class issue,My attendance and completion details for a doctoral course are not reflected correctly.,Course_Work,True,independent_unseen
+38,Coursework record,The portal is displaying an incomplete coursework record even though I completed the course.,Course_Work,True,independent_unseen
+39,Course requirement problem,I need clarification about an issue with the coursework requirement for my PhD.,Course_Work,True,independent_unseen
+40,Coursework update delay,The concerned office has not updated my completed coursework information.,Course_Work,True,independent_unseen
+41,RAC meeting pending,My Research Advisory Committee meeting has not yet been scheduled.,RAC,True,independent_unseen
+42,RAC schedule issue,I have not received the date for my next RAC meeting.,RAC,True,independent_unseen
+43,RAC proceedings update,The outcome of my RAC meeting is not visible in the research record.,RAC,True,independent_unseen
+44,RAC review pending,My research matter is awaiting consideration by the Research Advisory Committee.,RAC,True,independent_unseen
+45,RAC approval issue,The approval related to my RAC proceedings has not been updated.,RAC,True,independent_unseen
+46,RAC meeting request,Please provide an update on the pending request for my RAC meeting.,RAC,True,independent_unseen
+47,RAC recommendation issue,The recommendations from my RAC meeting have not been reflected in the portal.,RAC,True,independent_unseen
+48,Advisory committee delay,"I submitted the required research material for the RAC, but the process has not moved forward.",RAC,True,independent_unseen
+49,RAC status,My RAC status remains pending and I have not received an explanation.,RAC,True,independent_unseen
+50,RAC process problem,There is a delay in the Research Advisory Committee process for my doctoral case.,RAC,True,independent_unseen
+51,RDC review pending,My proposal is awaiting review by the Research Degree Committee.,RDC,True,independent_unseen
+52,RDC approval delay,The RDC approval for my research proposal has not been communicated yet.,RDC,True,independent_unseen
+53,RDC status issue,The portal does not show the current status of my Research Degree Committee case.,RDC,True,independent_unseen
+54,RDC meeting issue,I have not received information about the RDC meeting concerning my research work.,RDC,True,independent_unseen
+55,RDC decision pending,The decision on my research matter from the RDC is still pending.,RDC,True,independent_unseen
+56,RDC proposal update,My submitted proposal has not been updated after being sent to the RDC.,RDC,True,independent_unseen
+57,Research Degree Committee issue,Please check the progress of my case before the Research Degree Committee.,RDC,True,independent_unseen
+58,RDC clarification request,I need clarification regarding the pending RDC review of my doctoral proposal.,RDC,True,independent_unseen
+59,RDC processing delay,The concerned office has not provided an update on my RDC submission.,RDC,True,independent_unseen
+60,RDC case status,My RDC case appears to be waiting for committee action.,RDC,True,independent_unseen
+61,Publication verification pending,"My published research paper has been submitted for verification, but the verification is still pending.",Publication_Verification,True,independent_unseen
+62,Paper verification delay,The university has not completed verification of the publication details I provided.,Publication_Verification,True,independent_unseen
+63,Publication record issue,My research publication is not marked as verified in the academic record.,Publication_Verification,True,independent_unseen
+64,Article verification request,Please process the verification request for my published article.,Publication_Verification,True,independent_unseen
+65,Publication evidence review,I submitted the required publication evidence but have not received verification.,Publication_Verification,True,independent_unseen
+66,Research paper verification,The verification status of my journal publication has not changed.,Publication_Verification,True,independent_unseen
+67,Publication checking issue,My publication documents are awaiting confirmation by the concerned office.,Publication_Verification,True,independent_unseen
+68,Verified publication missing,The paper I submitted for academic verification is still shown as unverified.,Publication_Verification,True,independent_unseen
+69,Publication request delay,There has been a delay in checking the publication details submitted with my research record.,Publication_Verification,True,independent_unseen
+70,Publication verification status,I need an update on the verification of my research publication.,Publication_Verification,True,independent_unseen
+71,Thesis submission pending,"I submitted my doctoral thesis, but the submission has not been acknowledged in the system.",Thesis_Submission,True,independent_unseen
+72,Thesis upload issue,"The final thesis file was submitted successfully, but the portal does not show the submission.",Thesis_Submission,True,independent_unseen
+73,Thesis submission status,My thesis submission remains pending even though I completed the required formalities.,Thesis_Submission,True,independent_unseen
+74,Doctoral thesis submission,Please confirm whether my submitted thesis has been received by the university.,Thesis_Submission,True,independent_unseen
+75,Thesis receipt missing,I have not received confirmation for the thesis that I submitted.,Thesis_Submission,True,independent_unseen
+76,Final thesis submission issue,The research portal still shows my thesis as not submitted.,Thesis_Submission,True,independent_unseen
+77,Thesis submission record,My final thesis submission is missing from my academic record.,Thesis_Submission,True,independent_unseen
+78,Thesis submission delay,The office has not updated the status of my completed thesis submission.,Thesis_Submission,True,independent_unseen
+79,Thesis document submission,I submitted all thesis documents but the submission process has not been closed.,Thesis_Submission,True,independent_unseen
+80,Submission confirmation,I need confirmation that my doctoral thesis submission has been recorded.,Thesis_Submission,True,independent_unseen
+81,Thesis evaluation pending,My thesis has been submitted and I am waiting for the evaluation to be completed.,Thesis_Evaluation,True,independent_unseen
+82,Evaluation status delayed,The status of my doctoral thesis assessment has not changed for some time.,Thesis_Evaluation,True,independent_unseen
+83,Thesis review issue,I have not received an update regarding the evaluation of my submitted thesis.,Thesis_Evaluation,True,independent_unseen
+84,Evaluation process pending,The assessment of my thesis appears to be awaiting completion.,Thesis_Evaluation,True,independent_unseen
+85,Thesis assessment delay,Please provide the current status of my doctoral thesis evaluation.,Thesis_Evaluation,True,independent_unseen
+86,Evaluation record issue,The research portal does not show progress on my thesis evaluation.,Thesis_Evaluation,True,independent_unseen
+87,Thesis review pending,My submitted thesis is still waiting for the evaluation stage to be completed.,Thesis_Evaluation,True,independent_unseen
+88,Evaluation update request,I need an update from the concerned office about my thesis assessment.,Thesis_Evaluation,True,independent_unseen
+89,Doctoral assessment issue,There has been an unexplained delay in the evaluation of my thesis.,Thesis_Evaluation,True,independent_unseen
+90,Thesis evaluation status,My thesis evaluation remains pending after submission.,Thesis_Evaluation,True,independent_unseen
+91,Viva date not scheduled,I have completed the required thesis formalities but no date has been provided for my viva.,Viva,True,independent_unseen
+92,Viva examination pending,My doctoral viva voce examination has not yet been scheduled.,Viva,True,independent_unseen
+93,Defense date issue,I am waiting for confirmation of the date for my PhD defense.,Viva,True,independent_unseen
+94,Viva schedule delay,The university has not communicated the schedule for my viva examination.,Viva,True,independent_unseen
+95,Viva status update,Please update me on the current status of my doctoral viva.,Viva,True,independent_unseen
+96,Defense scheduling problem,"My thesis process has reached the defense stage, but the viva date is still pending.",Viva,True,independent_unseen
+97,Viva confirmation,I have not received confirmation regarding my viva voce examination.,Viva,True,independent_unseen
+98,Doctoral defense issue,The scheduling of my doctoral defense has been delayed.,Viva,True,independent_unseen
+99,Viva examination date,Kindly provide the expected date for my viva examination.,Viva,True,independent_unseen
+100,Viva process pending,"My viva formalities are complete, but the examination has not been arranged.",Viva,True,independent_unseen
+101,Research mode conversion,I submitted an application to change my doctoral status from full-time to part-time.,FT_PT_Conversion,True,independent_unseen
+102,Part-time conversion pending,My request to convert my research registration to part-time has not been approved yet.,FT_PT_Conversion,True,independent_unseen
+103,Full-time to part-time,Please update the status of my application for conversion from full-time research to part-time.,FT_PT_Conversion,True,independent_unseen
+104,Research status change,The requested change in my doctoral study mode is still awaiting processing.,FT_PT_Conversion,True,independent_unseen
+105,Conversion application delay,My full-time to part-time conversion request has remained pending.,FT_PT_Conversion,True,independent_unseen
+106,Study mode correction,The portal still shows my old research mode even though my conversion was approved.,FT_PT_Conversion,True,independent_unseen
+107,FT PT request,I need an update regarding my application to switch from full-time to part-time research.,FT_PT_Conversion,True,independent_unseen
+108,Research status conversion issue,"The documents for my change of research status were submitted, but there is no update.",FT_PT_Conversion,True,independent_unseen
+109,Mode conversion approval,Please review the pending approval for my full-time to part-time conversion.,FT_PT_Conversion,True,independent_unseen
+110,Doctoral status change,My requested change from full-time to part-time research has not been reflected.,FT_PT_Conversion,True,independent_unseen
+111,Fee payment missing,"I paid the required research fee, but the payment is still shown as outstanding.",Fee,True,independent_unseen
+112,Research fee issue,The fee amount deducted from my account is not reflected in my university record.,Fee,True,independent_unseen
+113,Payment receipt missing,I completed the fee payment but cannot find the corresponding receipt.,Fee,True,independent_unseen
+114,Fee status incorrect,My research portal marks the current fee as unpaid even though I have already paid it.,Fee,True,independent_unseen
+115,Doctoral fee problem,Please verify the payment made for my doctoral programme.,Fee,True,independent_unseen
+116,Fee transaction pending,The transaction has been completed by my bank but the university system has not updated it.,Fee,True,independent_unseen
+117,Research fee correction,The amount displayed against my research fee does not match the payment I made.,Fee,True,independent_unseen
+118,Payment record delay,My recent research fee payment has not appeared in the portal.,Fee,True,independent_unseen
+119,Fee payment confirmation,I need confirmation that my research fee payment has been received.,Fee,True,independent_unseen
+120,Fee-related grievance,The fee record for my doctoral programme needs to be checked and corrected.,Fee,True,independent_unseen
+121,Stipend not received,My research fellowship payment for the current month has not reached my account.,Fellowship,True,independent_unseen
+122,Fellowship delay,The monthly fellowship amount is still pending despite completion of the required formalities.,Fellowship,True,independent_unseen
+123,Scholarship payment issue,I have not received the fellowship amount that was due to me.,Fellowship,True,independent_unseen
+124,Fellowship record problem,The portal does not show the expected status of my fellowship payment.,Fellowship,True,independent_unseen
+125,Stipend pending,Please check why my research stipend has not been released.,Fellowship,True,independent_unseen
+126,Fellowship payment status,My fellowship payment remains pending and no reason has been provided.,Fellowship,True,independent_unseen
+127,Research scholarship issue,There is a delay in receiving my doctoral fellowship.,Fellowship,True,independent_unseen
+128,Monthly fellowship problem,The fellowship for the previous month has not been credited to my bank account.,Fellowship,True,independent_unseen
+129,Stipend processing delay,My fellowship request appears to be awaiting processing.,Fellowship,True,independent_unseen
+130,Fellowship clarification,I need an update on the pending payment of my research fellowship.,Fellowship,True,independent_unseen
+131,Name correction in portal,My name is displayed incorrectly in the research portal and needs to match my official document.,Portal_Data_Correction,True,independent_unseen
+132,Profile data issue,The personal information in my doctoral profile contains an error.,Portal_Data_Correction,True,independent_unseen
+133,Research record correction,My academic details in the portal do not match the records submitted by me.,Portal_Data_Correction,True,independent_unseen
+134,Portal information update,Please correct the outdated information shown in my research account.,Portal_Data_Correction,True,independent_unseen
+135,Personal data discrepancy,There is a mismatch between my official documents and the information displayed online.,Portal_Data_Correction,True,independent_unseen
+136,Portal record error,My research profile contains incorrect personal details that need correction.,Portal_Data_Correction,True,independent_unseen
+137,Data correction request,"I submitted a request to correct my portal information, but it has not been updated.",Portal_Data_Correction,True,independent_unseen
+138,Academic profile correction,The doctoral record in the portal needs to be corrected according to my documents.,Portal_Data_Correction,True,independent_unseen
+139,Portal details incorrect,The information displayed under my research profile is not accurate.,Portal_Data_Correction,True,independent_unseen
+140,Personal information update,Please update the incorrect details currently stored in my research portal account.,Portal_Data_Correction,True,independent_unseen
+141,RTI matter pending,I submitted an RTI-related request and have not received the expected response.,RTI_IIGRS,True,independent_unseen
+142,IIGRS grievance status,My IIGRS complaint is still pending and the status has not changed.,RTI_IIGRS,True,independent_unseen
+143,RTI request issue,The RTI request submitted through the prescribed channel has not been processed.,RTI_IIGRS,True,independent_unseen
+144,IIGRS response delayed,I am waiting for a response to the grievance I submitted through IIGRS.,RTI_IIGRS,True,independent_unseen
+145,RTI status update,Please provide an update on the current status of my RTI matter.,RTI_IIGRS,True,independent_unseen
+146,IIGRS case pending,The university has not updated the status of my IIGRS grievance.,RTI_IIGRS,True,independent_unseen
+147,RTI/IIGRS issue,I need assistance regarding a pending matter submitted under the RTI/IIGRS process.,RTI_IIGRS,True,independent_unseen
+148,RTI response problem,My RTI submission has not received a response within the expected process.,RTI_IIGRS,True,independent_unseen
+149,IIGRS request delay,The request I submitted through IIGRS appears to be awaiting action.,RTI_IIGRS,True,independent_unseen
+150,RTI grievance status,Please check why my RTI-related grievance is still showing as pending.,RTI_IIGRS,True,independent_unseen
+151,General research administration,I have a doctoral administrative issue that does not fall under any of the listed grievance categories.,Other,True,independent_unseen
+152,Unclassified research issue,My research-related problem is not covered by the available categories and needs guidance.,Other,True,independent_unseen
+153,Other doctoral matter,I need help with an administrative matter concerning my PhD that does not match the listed options.,Other,True,independent_unseen
+154,General grievance,The concerned research office needs to review an issue that cannot be classified under the current categories.,Other,True,independent_unseen
+155,Research office assistance,I have a research administration problem and am unsure which existing category applies to it.,Other,True,independent_unseen
+156,Unlisted research grievance,My issue concerns doctoral administration but does not fit the predefined grievance types.,Other,True,independent_unseen
+157,General doctoral request,Please advise me on a research-related administrative issue that is not represented in the portal categories.,Other,True,independent_unseen
+158,Other administrative problem,I need the appropriate authority to review a doctoral matter that falls outside the listed categories.,Other,True,independent_unseen
+159,Research process issue,There is an unresolved research administration problem that does not clearly belong to another category.,Other,True,independent_unseen
+160,Category not applicable,My grievance concerns a university research matter for which none of the available categories seems appropriate.,Other,True,independent_unseen
