@@ -16,6 +16,10 @@ from app.models.enums import GrievanceStatus
 from app.models.user import UserRole
 from app.models.audit_log import AuditLog
 from app.schemas.assignment import AssignmentCreate
+from app.services.authority_routing import (
+    get_expected_assistant_dean,
+    get_expected_forward_target,
+)
 from app.services.grievance_workflow import change_grievance_status
 
 from app.models.notification import NotificationType
@@ -128,34 +132,66 @@ def assign_grievance(
         )
 
     # --------------------------------------------------
-# 3. Validate hierarchical assignment
-# --------------------------------------------------
+    # 3. Validate routed assignment target
+    # --------------------------------------------------
 
-    NEXT_ROLE = {
-    UserRole.MANAGER: UserRole.ASSISTANT_DEAN,
-    UserRole.ASSISTANT_DEAN: UserRole.ASSOCIATE_DEAN,
-    UserRole.ASSOCIATE_DEAN: UserRole.DEAN,
-    }
+    if current_user.role == UserRole.MANAGER:
+        expected_assignee = get_expected_assistant_dean(
+            db=db,
+            grievance=grievance,
+        )
 
-    expected_role = NEXT_ROLE.get(current_user.role)
+        if assignee.id != expected_assignee.id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Manager can only assign this grievance to "
+                    f"{expected_assignee.full_name}, the Assistant "
+                    "Dean mapped to the grievance subject."
+                ),
+            )
 
-    if expected_role is None:
-      raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail=(
-            f"{current_user.role.value} cannot "
-            "forward grievances to another authority."
-        ),
-    )
+    elif current_user.role == UserRole.ASSISTANT_DEAN:
+        expected_assignee = get_expected_forward_target(
+            db=db,
+            grievance=grievance,
+        )
 
-    if assignee.role != expected_role:
-      raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail=(
-            f"{current_user.role.value} can only assign "
-            f"grievances to {expected_role.value}."
-        ),
-    )
+        if assignee.id != expected_assignee.id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Assistant Dean can only forward this grievance "
+                    f"to {expected_assignee.full_name}, the authority "
+                    "mapped to the final category."
+                ),
+            )
+
+    else:
+        NEXT_ROLE = {
+            UserRole.ASSOCIATE_DEAN: UserRole.DEAN,
+        }
+
+        expected_role = NEXT_ROLE.get(current_user.role)
+
+        if expected_role is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    f"{current_user.role.value} cannot "
+                    "forward grievances to another authority."
+                ),
+            )
+
+        if assignee.role != expected_role:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"{current_user.role.value} can only assign "
+                    f"grievances to {expected_role.value}."
+                ),
+            )
+
     # --------------------------------------------------
     # 4. Check existing active assignment
     # --------------------------------------------------
@@ -167,7 +203,12 @@ def assign_grievance(
         )
     )
 
-    if existing_assignment is not None:
+    is_forward = existing_assignment is not None
+
+    if (
+        existing_assignment is not None
+        and existing_assignment.assigned_to != current_user.id
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Grievance is already assigned.",
@@ -177,10 +218,15 @@ def assign_grievance(
     # 5. Validate grievance status
     # --------------------------------------------------
 
-    if grievance.status not in {
+    allowed_statuses = {
+        GrievanceStatus.ASSIGNED,
+        GrievanceStatus.ESCALATED,
+    } if is_forward else {
         GrievanceStatus.PENDING_REVIEW,
         GrievanceStatus.ESCALATED,
-    }:
+    }
+
+    if grievance.status not in allowed_statuses:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
@@ -188,6 +234,11 @@ def assign_grievance(
                 f"current status: {grievance.status.value}"
             ),
         )
+
+    if existing_assignment is not None:
+        existing_assignment.is_active = False
+        existing_assignment.unassigned_at = datetime.now(timezone.utc)
+        db.add(existing_assignment)
 
     # --------------------------------------------------
     # 6. Create assignment
@@ -209,16 +260,17 @@ def assign_grievance(
     # 7. Change grievance status
     # --------------------------------------------------
 
-    change_grievance_status(
-        db=db,
-        grievance=grievance,
-        new_status=GrievanceStatus.ASSIGNED,
-        changed_by=current_user,
-        reason=(
-            f"Grievance assigned to "
-            f"{assignee.full_name}."
-        ),
-    )
+    if grievance.status != GrievanceStatus.ASSIGNED:
+        change_grievance_status(
+            db=db,
+            grievance=grievance,
+            new_status=GrievanceStatus.ASSIGNED,
+            changed_by=current_user,
+            reason=(
+                f"Grievance assigned to "
+                f"{assignee.full_name}."
+            ),
+        )
 
     # --------------------------------------------------
     # 8. Audit log

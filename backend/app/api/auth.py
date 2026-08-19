@@ -2,16 +2,25 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
+
 from app.models.user import User, UserRole
-from app.schemas.auth import UserRegister, UserResponse
-from app.core.security import hash_password
+from app.models.subject import Subject
+
+from app.schemas.auth import (
+    UserRegister,
+    UserResponse,
+    TokenResponse,
+)
+
+from app.core.security import (
+    hash_password,
+    create_access_token,
+    verify_password,
+)
 
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.security import create_access_token, verify_password
-from app.schemas.auth import TokenResponse
-
-from app.api.dependencies import get_current_user, require_role,require_permission, Permission
+from app.api.dependencies import get_current_user
 
 
 router = APIRouter(
@@ -19,6 +28,10 @@ router = APIRouter(
     tags=["Authentication"],
 )
 
+
+# ============================================================
+# REGISTER
+# ============================================================
 
 @router.post(
     "/register",
@@ -29,7 +42,10 @@ def register_user(
     user_data: UserRegister,
     db: Session = Depends(get_db),
 ):
-    # Check whether email already exists
+    # --------------------------------------------------------
+    # 1. Check whether email already exists
+    # --------------------------------------------------------
+
     existing_user = (
         db.query(User)
         .filter(User.email == user_data.email)
@@ -42,13 +58,36 @@ def register_user(
             detail="Email is already registered",
         )
 
-    # Create new Applicant
+    # --------------------------------------------------------
+    # 2. Validate subject
+    # --------------------------------------------------------
+
+    subject = (
+        db.query(Subject)
+        .filter(
+            Subject.id == user_data.subject_id,
+            Subject.is_active.is_(True),
+        )
+        .first()
+    )
+
+    if subject is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or inactive subject",
+        )
+
+    # --------------------------------------------------------
+    # 3. Create new Applicant
+    # --------------------------------------------------------
+
     new_user = User(
         full_name=user_data.full_name,
         email=user_data.email,
         password_hash=hash_password(user_data.password),
         role=UserRole.APPLICANT,
         department=user_data.department,
+        subject_id=subject.id,
         is_active=True,
     )
 
@@ -57,6 +96,11 @@ def register_user(
     db.refresh(new_user)
 
     return new_user
+
+
+# ============================================================
+# LOGIN
+# ============================================================
 
 @router.post(
     "/login",
@@ -107,6 +151,11 @@ def login_user(
         "token_type": "bearer",
     }
 
+
+# ============================================================
+# CURRENT USER
+# ============================================================
+
 @router.get(
     "/me",
     response_model=UserResponse,
@@ -115,4 +164,3 @@ def get_me(
     current_user: User = Depends(get_current_user),
 ):
     return current_user
-

@@ -52,6 +52,8 @@ from app.models.audit_log import AuditLog
 
 from app.models.category import Category
 
+from app.services.authority_routing import get_routing_response
+
 
 router = APIRouter(
     prefix="/grievances",
@@ -83,6 +85,7 @@ def create_grievance(
     grievance = Grievance(
         grievance_id=generate_grievance_id(),
         applicant_id=current_user.id,
+        subject_id=current_user.subject_id,
         title=grievance_data.title,
         description=grievance_data.description,
         status=GrievanceStatus.SUBMITTED,
@@ -234,6 +237,12 @@ def get_grievance(
     )
 
     response.ai_processing = ai_processing
+
+    response.routing = get_routing_response(
+    db=db,
+    grievance=grievance,
+    current_user=current_user,
+    )
 
     return response
 
@@ -612,6 +621,12 @@ def review_ai_recommendation(
 
     response.ai_processing = ai_processing
 
+    response.routing = get_routing_response(
+    db=db,
+    grievance=grievance,
+    current_user=current_user,
+    )
+
     return response
 
 # ============================================================
@@ -654,5 +669,14 @@ def escalate_grievance_api(
 
     db.commit()
     db.refresh(grievance)
+
+    response = GrievanceResponse.model_validate(
+    grievance
+    )
+
+    response.routing = get_routing_response(
+    db=db,
+    grievance=grievance,
+    )
 
     return grievance

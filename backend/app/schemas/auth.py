@@ -9,6 +9,9 @@ class UserRegister(BaseModel):
     password: str
     department: str | None = None
 
+    # Applicant's research/academic subject
+    subject_id: UUID
+
 
 class UserResponse(BaseModel):
     id: UUID
@@ -16,9 +19,12 @@ class UserResponse(BaseModel):
     email: EmailStr
     role: str
     department: str | None
+    subject_id: UUID | None = None
     is_active: bool
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 
 class TokenResponse(BaseModel):

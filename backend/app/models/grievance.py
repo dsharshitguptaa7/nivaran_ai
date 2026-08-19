@@ -41,6 +41,13 @@ class Grievance(Base):
         index=True,
     )
 
+    subject_id: Mapped[uuid.UUID | None] = mapped_column(
+    UUID(as_uuid=True),
+    ForeignKey("subjects.id"),
+    nullable=True,
+    index=True,
+    )
+
     title: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
@@ -150,4 +157,9 @@ class Grievance(Base):
     final_category = relationship(
         "Category",
         foreign_keys=[final_category_id],
+    )
+
+    subject = relationship(
+    "Subject",
+    foreign_keys=[subject_id],
     )

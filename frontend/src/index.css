@@ -9204,3 +9204,700 @@ select {
   }
 
 }
+
+/* =========================================================
+   NIVARAN-AI — APPLICANT REGISTRATION
+========================================================= */
+
+.auth-page {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36% 64%;
+  background: #faf7ef;
+  color: #350713;
+}
+
+
+/* =========================================================
+   LEFT BRAND
+========================================================= */
+
+.auth-brand {
+  position: relative;
+  min-height: 100vh;
+  padding: 42px 46px;
+
+  display: flex;
+  flex-direction: column;
+
+  background:
+    radial-gradient(
+      circle at 15% 15%,
+      rgba(205, 166, 79, 0.10),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      #4b0b18 0%,
+      #3b0714 48%,
+      #26040d 100%
+    );
+
+  color: #fff;
+  overflow: hidden;
+}
+
+.auth-brand::before {
+  content: "";
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  right: -220px;
+  bottom: -190px;
+  border-radius: 50%;
+  background: rgba(205, 166, 79, 0.07);
+  pointer-events: none;
+}
+
+.auth-brand::after {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  left: -100px;
+  top: 45%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.025);
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.auth-logo {
+  position: relative;
+  z-index: 2;
+
+  width: fit-content;
+
+  color: #fff;
+  text-decoration: none;
+
+  font-size: 31px;
+  font-weight: 800;
+  letter-spacing: -1.4px;
+  line-height: 1;
+}
+
+.auth-logo span {
+  color: #d8b35d;
+}
+
+
+/* =========================================================
+   TAGLINE
+========================================================= */
+
+.auth-brand .login-tagline {
+  max-width: 330px;
+  margin-top: 13px;
+
+  color: rgba(255, 255, 255, 0.78);
+
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+
+/* =========================================================
+   BRAND CONTENT
+========================================================= */
+
+.auth-brand-content {
+  position: relative;
+  z-index: 1;
+
+  margin-top: auto;
+  margin-bottom: auto;
+
+  max-width: 500px;
+}
+
+
+/* =========================================================
+   BADGE
+========================================================= */
+
+.auth-badge {
+  display: inline-flex;
+  align-items: center;
+
+  width: fit-content;
+
+  padding: 9px 16px;
+
+  border: 1px solid rgba(205, 166, 79, 0.55);
+  border-radius: 999px;
+
+  background: rgba(205, 166, 79, 0.07);
+
+  color: #e4c777;
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+
+  margin-bottom: 22px;
+}
+
+
+/* =========================================================
+   BRAND HEADING
+========================================================= */
+
+.auth-brand-content h1 {
+  margin: 0;
+
+  max-width: 500px;
+
+  color: #fff;
+
+  font-size: clamp(43px, 4vw, 67px);
+  line-height: 0.98;
+
+  font-weight: 800;
+  letter-spacing: -2.8px;
+}
+
+.auth-brand-content h1 span {
+  display: block;
+  color: #e3c579;
+}
+
+
+/* =========================================================
+   BRAND DESCRIPTION
+========================================================= */
+
+.auth-brand-content > p {
+  max-width: 480px;
+
+  margin: 24px 0 26px;
+
+  color: rgba(255, 255, 255, 0.78);
+
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   FEATURES
+========================================================= */
+
+.auth-features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-features > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  color: rgba(255, 255, 255, 0.88);
+
+  font-size: 13px;
+}
+
+.auth-features > div > span {
+  width: 27px;
+  height: 27px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e3c579;
+  color: #3b0714;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   RIGHT SECTION
+========================================================= */
+
+.auth-form-section {
+  min-height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 35px 60px;
+
+  background:
+    radial-gradient(
+      circle at 85% 10%,
+      rgba(205, 166, 79, 0.08),
+      transparent 28%
+    ),
+    #fbf9f2;
+
+  overflow-y: auto;
+}
+
+
+/* =========================================================
+   FORM CONTAINER
+========================================================= */
+
+.auth-form-container {
+  width: 100%;
+  max-width: 590px;
+}
+
+
+/* =========================================================
+   BACK
+========================================================= */
+
+.back-home {
+  display: inline-flex;
+  align-items: center;
+
+  margin-bottom: 28px;
+
+  color: #80666d;
+
+  text-decoration: none;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  transition: color 0.2s ease;
+}
+
+.back-home:hover {
+  color: #6a0d20;
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
+
+.auth-heading {
+  margin-bottom: 20px;
+}
+
+.auth-heading h2 {
+  margin: 0 0 6px;
+
+  color: #350713;
+
+  font-size: 36px;
+  line-height: 1.1;
+
+  font-weight: 800;
+  letter-spacing: -1.3px;
+}
+
+.auth-heading p {
+  margin: 0;
+
+  color: #806c73;
+
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.auth-form-container .login-error {
+  margin-bottom: 15px;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 13px;
+}
+
+
+/* =========================================================
+   FORM GROUP
+========================================================= */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  color: #350713;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   INPUT + SELECT
+========================================================= */
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  height: 49px;
+
+  padding: 0 15px;
+
+  border: 1px solid #ddd3c3;
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #fff;
+  color: #350713;
+
+  font-family: inherit;
+  font-size: 13px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+
+/* =========================================================
+   PLACEHOLDER
+========================================================= */
+
+.form-group input::placeholder {
+  color: #b1a4a5;
+}
+
+
+/* =========================================================
+   HOVER
+========================================================= */
+
+.form-group input:hover,
+.form-group select:hover {
+  border-color: #ccb786;
+}
+
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #c9a34f;
+
+  background: #fffefa;
+
+  box-shadow:
+    0 0 0 3px rgba(201, 163, 79, 0.12);
+}
+
+
+/* =========================================================
+   SELECT
+========================================================= */
+
+.form-group select {
+  appearance: none;
+  cursor: pointer;
+
+  padding-right: 42px;
+
+  background-image:
+    linear-gradient(
+      45deg,
+      transparent 50%,
+      #80666d 50%
+    ),
+    linear-gradient(
+      135deg,
+      #80666d 50%,
+      transparent 50%
+    );
+
+  background-position:
+    calc(100% - 18px) 20px,
+    calc(100% - 12px) 20px;
+
+  background-size:
+    6px 6px,
+    6px 6px;
+
+  background-repeat: no-repeat;
+}
+
+.form-group select:invalid {
+  color: #b1a4a5;
+}
+
+
+/* =========================================================
+   SUBMIT
+========================================================= */
+
+.auth-submit {
+  width: 100%;
+  height: 51px;
+
+  margin-top: 4px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  border: none;
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #dcb967,
+      #cda34c
+    );
+
+  color: #2d0711;
+
+  font-family: inherit;
+
+  font-size: 13px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 18px rgba(155, 113, 35, 0.18);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.auth-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+
+  filter: brightness(1.03);
+
+  box-shadow:
+    0 12px 25px rgba(155, 113, 35, 0.25);
+}
+
+.auth-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   ARROW
+========================================================= */
+
+.auth-submit > span:last-child {
+  font-size: 17px;
+
+  transition: transform 0.2s ease;
+}
+
+.auth-submit:hover > span:last-child {
+  transform: translateX(4px);
+}
+
+
+/* =========================================================
+   DIVIDER
+========================================================= */
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  margin: 19px 0 15px;
+
+  color: #aa9b9e;
+
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+
+  height: 1px;
+
+  flex: 1;
+
+  background: #e1d8ca;
+}
+
+
+/* =========================================================
+   LOGIN PROMPT
+========================================================= */
+
+.register-prompt {
+  margin: 0;
+
+  text-align: center;
+
+  color: #806c73;
+
+  font-size: 12px;
+}
+
+.register-prompt a {
+  color: #7b0d25;
+
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+.register-prompt a:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+========================================================= */
+
+@media (max-width: 1050px) {
+
+  .auth-page {
+    grid-template-columns: 40% 60%;
+  }
+
+  .auth-brand {
+    padding: 35px 30px;
+  }
+
+  .auth-form-section {
+    padding: 35px 40px;
+  }
+
+  .auth-brand-content h1 {
+    font-size: 48px;
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 800px) {
+
+  .auth-page {
+    display: block;
+    min-height: 100vh;
+  }
+
+  .auth-brand {
+    min-height: auto;
+    padding: 30px 25px 38px;
+  }
+
+  .auth-brand-content {
+    margin-top: 65px;
+    margin-bottom: 0;
+  }
+
+  .auth-brand-content h1 {
+    font-size: 43px;
+  }
+
+  .auth-form-section {
+    min-height: auto;
+    padding: 38px 25px 50px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .auth-brand {
+    padding: 27px 20px 32px;
+  }
+
+  .auth-logo {
+    font-size: 27px;
+  }
+
+  .auth-brand-content {
+    margin-top: 55px;
+  }
+
+  .auth-brand-content h1 {
+    font-size: 38px;
+    letter-spacing: -1.8px;
+  }
+
+  .auth-form-section {
+    padding: 32px 20px 42px;
+  }
+
+  .auth-heading h2 {
+    font-size: 32px;
+  }
+
+  .auth-form {
+    gap: 12px;
+  }
+
+  .form-group input,
+  .form-group select {
+    height: 48px;
+    font-size: 13px;
+  }
+
+  .auth-submit {
+    height: 50px;
+  }
+}

@@ -11,6 +11,10 @@ from app.models.escalation import Escalation, EscalationRole
 from app.models.enums import GrievanceStatus
 
 from app.services.grievance_workflow import change_grievance_status
+from app.services.authority_routing import (
+    get_expected_assistant_dean,
+    get_expected_forward_target,
+)
 from app.models.audit_log import AuditLog
 
 from app.models.notification import NotificationType
@@ -102,6 +106,33 @@ def get_next_authority(
     return user
 
 
+def get_routed_next_authority(
+    db: Session,
+    grievance: Grievance,
+    current_user: User,
+) -> User:
+    if current_user.role == UserRole.MANAGER:
+        return get_expected_assistant_dean(
+            db=db,
+            grievance=grievance,
+        )
+
+    if current_user.role == UserRole.ASSISTANT_DEAN:
+        return get_expected_forward_target(
+            db=db,
+            grievance=grievance,
+        )
+
+    next_role = get_next_escalation_role(
+        current_user.role
+    )
+
+    return get_next_authority(
+        db=db,
+        next_role=next_role,
+    )
+
+
 # ============================================================
 # ESCALATE GRIEVANCE
 # ============================================================
@@ -124,25 +155,9 @@ def escalate_grievance(
             detail="Applicants cannot escalate grievances",
         )
 
-    # --------------------------------------------------------
-    # 2. Find next role
-    # --------------------------------------------------------
-
-    next_role = get_next_escalation_role(
-        current_user.role
-    )
 
     # --------------------------------------------------------
-    # 3. Find active user of next role
-    # --------------------------------------------------------
-
-    next_authority = get_next_authority(
-        db=db,
-        next_role=next_role,
-    )
-
-    # --------------------------------------------------------
-    # 4. Find current active assignment
+    # 3. Find current active assignment
     # --------------------------------------------------------
 
     current_assignment = db.scalar(
@@ -154,39 +169,61 @@ def escalate_grievance(
     )
 
     # --------------------------------------------------------
-# 4A. Verify grievance is assigned to current user
-# --------------------------------------------------------
+    # 3A. Verify grievance ownership for forwarded assignments
+    # --------------------------------------------------------
 
     if current_assignment is None:
-     raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Grievance is not currently assigned to any authority",
-    )
+        if current_user.role != UserRole.MANAGER:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Grievance is not currently assigned to any authority",
+            )
 
-    if current_assignment.assigned_to != current_user.id:
-     raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="You can only escalate grievances assigned to you",
-    )
+    elif current_assignment.assigned_to != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only escalate grievances assigned to you",
+        )
 
-    # --------------------------------------------------------
-# 4B. Validate grievance status
-# --------------------------------------------------------
-
-    if grievance.status not in {
-    GrievanceStatus.ASSIGNED,
-    GrievanceStatus.ESCALATED,
-    }:
-     raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail=(
-            "Grievance cannot be escalated from "
-            f"{grievance.status.value} status"
-        ),
-    )
 
     # --------------------------------------------------------
-    # 5. Deactivate current assignment
+    # 3B. Validate grievance status
+    # --------------------------------------------------------
+
+    allowed_statuses = {
+        GrievanceStatus.ASSIGNED,
+        GrievanceStatus.ESCALATED,
+    }
+
+    if current_assignment is None:
+        allowed_statuses = {
+            GrievanceStatus.PENDING_REVIEW,
+            GrievanceStatus.ESCALATED,
+        }
+
+    if grievance.status not in allowed_statuses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Grievance cannot be escalated from "
+                f"{grievance.status.value} status"
+            ),
+        )
+
+        # --------------------------------------------------------
+    # 2. Find next authority using configured routing
+    # --------------------------------------------------------
+
+    next_authority = get_routed_next_authority(
+        db=db,
+        grievance=grievance,
+        current_user=current_user,
+    )
+
+    next_role = next_authority.role
+
+    # --------------------------------------------------------
+    # 4. Deactivate current assignment
     # --------------------------------------------------------
 
     if current_assignment is not None:
@@ -200,7 +237,7 @@ def escalate_grievance(
         db.add(current_assignment)
 
     # --------------------------------------------------------
-    # 6. Create escalation history
+    # 5. Create escalation history
     # --------------------------------------------------------
 
     escalation = Escalation(
@@ -224,7 +261,7 @@ def escalate_grievance(
     db.add(escalation)
 
     # --------------------------------------------------------
-    # 7. Create new assignment
+    # 6. Create new assignment
     # --------------------------------------------------------
 
     new_assignment = Assignment(
@@ -244,8 +281,8 @@ def escalate_grievance(
     db.add(grievance)
 
     # --------------------------------------------------------
-# 7A. Create audit log
-# --------------------------------------------------------
+    # 6A. Create audit log
+    # --------------------------------------------------------
 
     audit_log = AuditLog(
     user_id=current_user.id,
@@ -263,8 +300,8 @@ def escalate_grievance(
     db.add(audit_log)
 
     # --------------------------------------------------------
-# 7B. Create notification for next authority
-# --------------------------------------------------------
+    # 6B. Create notification for next authority
+    # --------------------------------------------------------
 
     create_notification(
     db=db,
@@ -280,7 +317,7 @@ def escalate_grievance(
 )
 
     # --------------------------------------------------------
-    # 8. Update status ONLY if necessary
+    # 7. Update status ONLY if necessary
     # --------------------------------------------------------
 
     if grievance.status != GrievanceStatus.ESCALATED:

@@ -983,6 +983,7 @@ function AssociateDeanGrievanceDetail() {
               ASSOCIATE DEAN ACTIONS
           ================================================= */}
 
+          {grievance.routing?.can_forward && (
           <section className="authority-content-card authority-role-actions">
 
 
@@ -1070,6 +1071,7 @@ function AssociateDeanGrievanceDetail() {
             </div>
 
           </section>
+          )}
 
 
           {/* =================================================

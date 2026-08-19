@@ -75,6 +75,12 @@ class AIReviewRequest(BaseModel):
     decision: AIReviewDecision
 
 
+class GrievanceRoutingResponse(BaseModel):
+    can_forward: bool
+    routing_type: str | None = None
+    next_authority_role: str | None = None
+    next_authority_name: str | None = None
+
 
 # ============================================================
 # GRIEVANCE RESPONSE
@@ -103,6 +109,8 @@ class GrievanceResponse(BaseModel):
 
     ai_confidence: float | None = None
     ai_processing: AIProcessingSummary | None = None
+
+    routing: GrievanceRoutingResponse | None = None
 
     submitted_at: datetime
     resolved_at: datetime | None = None

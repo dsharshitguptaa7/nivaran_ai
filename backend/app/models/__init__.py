@@ -17,3 +17,6 @@ from app.models.ai_processing import (
     AIProcessingStatus,
 )
 from app.models.enums import GrievanceStatus, GrievancePriority
+from app.models.subject import Subject
+from app.models.subject_cluster import SubjectCluster
+from app.models.grievance_cluster import GrievanceCluster

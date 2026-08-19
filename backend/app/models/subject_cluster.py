@@ -8,8 +8,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.database import Base
 
 
-class Subject(Base):
-    __tablename__ = "subjects"
+class SubjectCluster(Base):
+    __tablename__ = "subject_clusters"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -17,16 +17,20 @@ class Subject(Base):
         default=uuid.uuid4,
     )
 
-    name: Mapped[str] = mapped_column(
-        String(150),
-        unique=True,
+    cluster_number: Mapped[int] = mapped_column(
         nullable=False,
+        unique=True,
         index=True,
     )
 
-    subject_cluster_id: Mapped[uuid.UUID] = mapped_column(
+    name: Mapped[str] = mapped_column(
+        String(150),
+        nullable=False,
+    )
+
+    assistant_dean_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("subject_clusters.id"),
+        ForeignKey("users.id"),
         nullable=False,
         index=True,
     )
@@ -50,7 +54,7 @@ class Subject(Base):
         nullable=False,
     )
 
-    subject_cluster = relationship(
-        "SubjectCluster",
-        foreign_keys=[subject_cluster_id],
+    assistant_dean = relationship(
+        "User",
+        foreign_keys=[assistant_dean_id],
     )

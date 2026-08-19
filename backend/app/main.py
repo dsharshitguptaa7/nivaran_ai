@@ -7,6 +7,7 @@ from app.api.auth import router as auth_router
 from app.api.routes.grievances import router as grievances_router
 from app.api.routes.assignment import router as assignment_router
 from app.api.routes.categories import router as categories_router
+from app.api.routes.subjects import router as subjects_router
 
 
 app = FastAPI(
@@ -56,6 +57,10 @@ app.include_router(
     prefix="/api/v1",
 )
 
+app.include_router(
+    subjects_router,
+    prefix="/api/v1",
+)
 # ==========================================
 # ROOT
 # ==========================================

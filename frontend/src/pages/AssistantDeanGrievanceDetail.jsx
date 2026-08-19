@@ -259,17 +259,21 @@ function AssistantDeanGrievanceDetail() {
      FORWARD TO ASSOCIATE DEAN
   ====================================================== */
 
-  async function handleForwardToAssociateDean() {
+  async function handleForwardToNextAuthority() {
 
     if (!grievance) {
       return;
     }
 
 
+    const nextAuthority =
+     grievance.routing?.next_authority_name ||
+     "the next authority";
+
     const confirmed =
-      window.confirm(
-        "Forward this grievance to Associate Dean?"
-      );
+     window.confirm(
+     `Forward this grievance to ${nextAuthority}?`
+     );
 
 
     if (!confirmed) {
@@ -350,7 +354,7 @@ function AssistantDeanGrievanceDetail() {
 
 
       setActionMessage(
-        "Grievance successfully forwarded to Associate Dean."
+      `Grievance successfully forwarded to ${nextAuthority}.`
       );
 
 
@@ -1041,6 +1045,7 @@ function AssistantDeanGrievanceDetail() {
               ASSISTANT DEAN ACTIONS
           ================================================= */}
 
+          {grievance.routing?.can_forward && (
           <section className="authority-content-card authority-role-actions">
 
 
@@ -1107,27 +1112,27 @@ function AssistantDeanGrievanceDetail() {
                 <button
                   type="button"
                   className="authority-primary-button"
-                  onClick={
-                    handleForwardToAssociateDean
-                  }
+                  onClick={handleForwardToNextAuthority}
                   disabled={
-                    actionLoading ||
-                    grievance.status !==
-                      "ESCALATED"
+                  actionLoading ||
+                  !["ASSIGNED", "ESCALATED"].includes(
+                  grievance.status
+                  )
                   }
-                >
-
+                  >
                   {actionLoading
-                    ? "Forwarding..."
-                    : "Forward to Associate Dean →"}
-
+                   ? "Forwarding..."
+                   : `Forward to ${
+                   grievance.routing?.next_authority_name ||
+                  "Next Authority"
+                  } →`}
                 </button>
-
               </div>
 
             </div>
 
           </section>
+          )}
 
 
           {/* =================================================
