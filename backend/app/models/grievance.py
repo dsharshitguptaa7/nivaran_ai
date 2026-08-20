@@ -144,6 +144,30 @@ class Grievance(Base):
     index=True,
     )
 
+    resolution_notes: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    resolved_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True,
+        index=True,
+    )
+
+    closure_remarks: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    closed_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True,
+        index=True,
+    )
+
     applicant = relationship(
         "User",
         foreign_keys=[applicant_id],
@@ -162,4 +186,30 @@ class Grievance(Base):
     subject = relationship(
     "Subject",
     foreign_keys=[subject_id],
+    )
+
+    resolved_by = relationship(
+        "User",
+        foreign_keys=[resolved_by_id],
+    )
+
+    closed_by = relationship(
+        "User",
+        foreign_keys=[closed_by_id],
+    )
+
+    documents = relationship(
+        "Document",
+        foreign_keys="[Document.grievance_id]",
+        back_populates="grievance",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    document_requests = relationship(
+        "DocumentRequest",
+        foreign_keys="[DocumentRequest.grievance_id]",
+        back_populates="grievance",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )

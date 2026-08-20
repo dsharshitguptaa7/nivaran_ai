@@ -59,7 +59,25 @@ def register_user(
         )
 
     # --------------------------------------------------------
-    # 2. Validate subject
+    # 2. Check PhD registration number uniqueness (if provided)
+    # --------------------------------------------------------
+
+    clean_phd_reg = user_data.phd_registration_number.strip() if user_data.phd_registration_number and user_data.phd_registration_number.strip() else None
+
+    if clean_phd_reg:
+        existing_reg = (
+            db.query(User)
+            .filter(User.phd_registration_number == clean_phd_reg)
+            .first()
+        )
+        if existing_reg:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="PhD Registration Number is already registered with another account.",
+            )
+
+    # --------------------------------------------------------
+    # 3. Validate subject
     # --------------------------------------------------------
 
     subject = (
@@ -78,7 +96,7 @@ def register_user(
         )
 
     # --------------------------------------------------------
-    # 3. Create new Applicant
+    # 4. Create new Applicant
     # --------------------------------------------------------
 
     new_user = User(
@@ -87,6 +105,7 @@ def register_user(
         password_hash=hash_password(user_data.password),
         role=UserRole.APPLICANT,
         department=user_data.department,
+        phd_registration_number=clean_phd_reg,
         subject_id=subject.id,
         is_active=True,
     )

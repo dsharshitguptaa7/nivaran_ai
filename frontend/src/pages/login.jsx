@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import {
   loginUser,
@@ -8,8 +8,17 @@ import {
 
 function Login() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [loginType, setLoginType] = useState("applicant");
+  const initialType = searchParams.get("type") === "authority" ? "authority" : "applicant";
+  const [loginType, setLoginType] = useState(initialType);
+
+  useEffect(() => {
+    const typeParam = searchParams.get("type");
+    if (typeParam === "authority" || typeParam === "applicant") {
+      setLoginType(typeParam);
+    }
+  }, [searchParams]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +28,7 @@ function Login() {
 
   const handleTypeChange = (type) => {
     setLoginType(type);
+    setSearchParams(type === "authority" ? { type: "authority" } : {});
     setError("");
     setEmail("");
     setPassword("");

@@ -2,12 +2,17 @@ from fastapi import FastAPI
 from sqlalchemy import text
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.config import settings
 from app.db.database import engine
 from app.api.auth import router as auth_router
 from app.api.routes.grievances import router as grievances_router
 from app.api.routes.assignment import router as assignment_router
 from app.api.routes.categories import router as categories_router
 from app.api.routes.subjects import router as subjects_router
+from app.api.routes.documents import router as documents_router
+from app.api.routes.dean import router as dean_router
+from app.api.routes.notifications import router as notifications_router
+from app.api.routes.document_requests import router as document_requests_router
 
 
 app = FastAPI(
@@ -23,10 +28,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,6 +61,26 @@ app.include_router(
 
 app.include_router(
     subjects_router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    documents_router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    dean_router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    notifications_router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    document_requests_router,
     prefix="/api/v1",
 )
 # ==========================================

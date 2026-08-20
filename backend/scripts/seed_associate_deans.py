@@ -42,7 +42,7 @@ def seed_associate_deans():
                 email=email,
                 password_hash=hash_password(TEMP_PASSWORD),
                 role=UserRole.ASSOCIATE_DEAN,
-                department=None,
+                department="R&D",
                 is_active=True,
             )
 

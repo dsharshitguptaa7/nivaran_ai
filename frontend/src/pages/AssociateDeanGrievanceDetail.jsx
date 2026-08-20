@@ -1,1192 +1,718 @@
 import { useEffect, useState } from "react";
-import {
-  Link,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import {
   getGrievance,
   getGrievanceHistory,
+  resolveGrievance,
   escalateGrievance,
 } from "../services/grievanceService";
-
 import {
-  getCurrentUser,
-  logoutUser,
-} from "../services/authService";
+  uploadDocument,
+  downloadDocument,
+} from "../services/documentService";
+import { getCurrentUser, logoutUser } from "../services/authService";
+
+import AuthorityHeader from "../components/AuthorityHeader";
+import AuthoritySidebar from "../components/AuthoritySidebar";
+import StatusBadge from "../components/StatusBadge";
+import PriorityBadge from "../components/PriorityBadge";
+import AIAnalysisCard from "../components/AIAnalysisCard";
+import ApplicantInfoCard from "../components/ApplicantInfoCard";
+import DocumentRequestsSection from "../components/DocumentRequestsSection";
+import RequestDocumentModal from "../components/RequestDocumentModal";
+import LoadingState from "../components/LoadingState";
+import ErrorState from "../components/ErrorState";
 
 
 function AssociateDeanGrievanceDetail() {
-
   const { grievanceId } = useParams();
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
+  const [grievance, setGrievance] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [grievance, setGrievance] =
-    useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [remarks, setRemarks] = useState("");
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
 
-  const [history, setHistory] =
-    useState([]);
+  // Resolution Modal State
+  const [resolveModalOpen, setResolveModalOpen] = useState(false);
+  const [resolutionNotes, setResolutionNotes] = useState("");
+  const [resolveLoading, setResolveLoading] = useState(false);
+  const [resolveError, setResolveError] = useState("");
 
-  const [loading, setLoading] =
-    useState(true);
+  // Document Management State
+  const [docUploading, setDocUploading] = useState(false);
+  const [docMessage, setDocMessage] = useState("");
+  const [docError, setDocError] = useState("");
 
-  const [error, setError] =
-    useState("");
-
-  const [actionLoading, setActionLoading] =
-    useState(false);
-
-  const [actionMessage, setActionMessage] =
-    useState("");
-
-  const [actionError, setActionError] =
-    useState("");
-
-  const [remarks, setRemarks] =
-    useState("");
-
-
-  /* =====================================================
-     LOAD GRIEVANCE
-  ====================================================== */
-
+  // =====================================================
+  // LOAD GRIEVANCE
+  // =====================================================
   useEffect(() => {
     loadGrievance();
   }, [grievanceId]);
 
-
   async function loadGrievance() {
-
     try {
-
       setLoading(true);
       setError("");
 
-      const [
-        grievanceData,
-        historyData,
-        currentUser,
-      ] = await Promise.all([
-
-        getGrievance(
-          grievanceId
-        ),
-
-        getGrievanceHistory(
-          grievanceId
-        ),
-
-        getCurrentUser(),
-
+      const [currentUser, grievanceData, historyData] = await Promise.all([
+        getCurrentUser().catch(() => null),
+        getGrievance(grievanceId),
+        getGrievanceHistory(grievanceId).catch(() => []),
       ]);
 
-      setGrievance(
-        grievanceData
-      );
-
-      setHistory(
-        historyData
-      );
-
-      setUser(
-        currentUser
-      );
-
-
+      setUser(currentUser);
+      setGrievance(grievanceData);
+      setHistory(Array.isArray(historyData) ? historyData : []);
     } catch (err) {
-
-      console.error(
-        "Associate Dean grievance error:",
-        err
-      );
-
-
+      console.error("Associate Dean load grievance error:", err);
       if (
-        err.message
-          ?.toLowerCase()
-          .includes("401") ||
-        err.message
-          ?.toLowerCase()
-          .includes("unauthorized")
+        err.message?.toLowerCase().includes("401") ||
+        err.message?.toLowerCase().includes("unauthorized")
       ) {
-
         logoutUser();
-
-        navigate(
-          "/authority/login"
-        );
-
+        navigate("/login?type=authority");
         return;
-
       }
-
-
-      setError(
-        err?.message ||
-        "Unable to load grievance."
-      );
-
-
+      setError(err?.message || "Unable to load grievance.");
     } finally {
-
       setLoading(false);
-
     }
-
   }
 
-
-  /* =====================================================
-     FORMATTERS
-  ====================================================== */
-
-  function formatDate(date) {
-
-    if (!date) {
-      return "-";
+  // =====================================================
+  // ACTIONS
+  // =====================================================
+  async function handleEscalateGrievance(e) {
+    if (e) e.preventDefault();
+    if (!remarks.trim()) {
+      setActionError("Please enter reasons for escalating this cluster grievance to the Dean.");
+      return;
     }
 
-    return new Date(
-      date
-    ).toLocaleDateString(
-      "en-IN",
-      {
+    try {
+      setActionLoading(true);
+      setActionError("");
+      setActionMessage("");
+
+      const response = await escalateGrievance(
+        grievance.grievance_id,
+        "Cluster Redressal Escalation",
+        remarks.trim()
+      );
+
+      setGrievance(response);
+      setRemarks("");
+      const targetName = response.routing?.assigned_to_name || response.routing?.next_authority_name || grievance.routing?.next_authority_name || grievance.next_authority_name || "Dean";
+      setActionMessage(`Grievance successfully escalated to ${targetName} (Dean) for executive institutional review.`);
+      const updatedHistory = await getGrievanceHistory(grievance.grievance_id);
+      setHistory(Array.isArray(updatedHistory) ? updatedHistory : []);
+    } catch (err) {
+      console.error("Escalate grievance error:", err);
+      setActionError(err?.message || "Unable to escalate grievance.");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleResolveGrievance(e) {
+    if (e) e.preventDefault();
+    if (!resolutionNotes.trim()) {
+      setResolveError("Please provide clear resolution notes explaining the cluster redressal.");
+      return;
+    }
+
+    try {
+      setResolveLoading(true);
+      setResolveError("");
+
+      const response = await resolveGrievance(grievance.grievance_id, resolutionNotes.trim());
+      setGrievance(response);
+      setResolveModalOpen(false);
+      setResolutionNotes("");
+      setActionMessage("Grievance has been resolved and submitted for Manager closure review.");
+      const updatedHistory = await getGrievanceHistory(grievance.grievance_id);
+      setHistory(Array.isArray(updatedHistory) ? updatedHistory : []);
+    } catch (err) {
+      console.error("Resolve grievance error:", err);
+      setResolveError(err?.message || "Failed to record resolution.");
+    } finally {
+      setResolveLoading(false);
+    }
+  }
+
+  async function handleDocumentUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file || !grievance) return;
+
+    if (file.size > 20 * 1024 * 1024) {
+      setDocError(`File "${file.name}" exceeds 20MB limit.`);
+      return;
+    }
+
+    try {
+      setDocUploading(true);
+      setDocError("");
+      setDocMessage("");
+
+      await uploadDocument(grievance.grievance_id, file, "RESOLUTION_PROOF");
+      setDocMessage(`Document "${file.name}" uploaded successfully.`);
+      const updatedGrievance = await getGrievance(grievance.grievance_id);
+      setGrievance(updatedGrievance);
+    } catch (err) {
+      console.error("Document upload error:", err);
+      setDocError(err?.message || "Failed to upload document.");
+    } finally {
+      setDocUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handleDocumentDownload(doc) {
+    try {
+      await downloadDocument(doc.id, doc.file_name);
+    } catch (err) {
+      console.error("Download error:", err);
+      alert(err?.message || "Failed to download document.");
+    }
+  }
+
+  function handleLogout() {
+    logoutUser();
+    navigate("/login");
+  }
+
+  function formatStatus(status) {
+    if (!status) return "-";
+    return String(status).replaceAll("_", " ");
+  }
+
+  function formatDate(date) {
+    if (!date) return "-";
+    try {
+      return new Date(date).toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "short",
         year: "numeric",
-      }
-    );
-
+      });
+    } catch {
+      return String(date);
+    }
   }
 
-
   function formatDateTime(date) {
-
-    if (!date) {
-      return "-";
-    }
-
-    return new Date(
-      date
-    ).toLocaleString(
-      "en-IN",
-      {
+    if (!date) return "-";
+    try {
+      return new Date(date).toLocaleString("en-IN", {
         day: "2-digit",
         month: "short",
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      }
-    );
-
+      });
+    } catch {
+      return String(date);
+    }
   }
 
-
-  function formatStatus(status) {
-
-    if (!status) {
-      return "-";
-    }
-
-    return status.replaceAll(
-      "_",
-      " "
-    );
-
+  function getCategoryName(g) {
+    if (!g) return "Not classified";
+    if (g.final_category && typeof g.final_category === "object") return g.final_category.name || "General";
+    if (g.category && typeof g.category === "object") return g.category.name || "General";
+    if (typeof g.category === "string") return g.category;
+    return "Not classified";
   }
 
-
-  function statusClass(status) {
-
-    if (!status) {
-      return "";
-    }
-
-    return status
-      .toLowerCase()
-      .replaceAll(
-        "_",
-        "-"
-      );
-
+  function getClusterName(g) {
+    if (!g) return "Academic Cluster";
+    if (g.routing?.cluster_name) return g.routing.cluster_name;
+    if (typeof g.cluster === "string") return g.cluster;
+    return "Academic Affairs";
   }
 
-
-  /* =====================================================
-     USER
-  ====================================================== */
-
-  const userName =
-    user?.full_name ||
-    user?.name ||
-    "Associate Dean";
-
-
-  const userRole =
-    user?.role
-      ? user.role.replaceAll(
-          "_",
-          " "
-        )
-      : "ASSOCIATE DEAN";
-
-
-  const userInitial =
-    userName
-      .charAt(0)
-      .toUpperCase();
-
-
-  /* =====================================================
-     LOGOUT
-  ====================================================== */
-
-  function handleLogout() {
-
-    logoutUser();
-
-    navigate(
-      "/authority/login"
-    );
-
+  function getDepartmentName(g) {
+    if (!g) return "-";
+    if (g.routing?.subject_name) return g.routing.subject_name;
+    if (typeof g.department === "string") return g.department;
+    return "Academic Department";
   }
 
-
-  /* =====================================================
-     FORWARD TO DEAN
-  ====================================================== */
-
-  async function handleForwardToDean() {
-
-    if (!grievance) {
-      return;
-    }
-
-
-    const confirmed =
-      window.confirm(
-        "Forward this grievance to Dean?"
-      );
-
-
-    if (!confirmed) {
-      return;
-    }
-
-
-    try {
-
-      setActionLoading(true);
-
-      setActionMessage("");
-
-      setActionError("");
-
-
-      const response =
-        await escalateGrievance(
-          grievance.grievance_id,
-          "Final administrative review is required.",
-          remarks ||
-            "Forwarding to Dean for final consideration."
-        );
-
-
-      setGrievance(
-        response
-      );
-
-      setRemarks("");
-
-
-      setActionMessage(
-        "Grievance successfully forwarded to Dean."
-      );
-
-
-      const updatedHistory =
-        await getGrievanceHistory(
-          grievance.grievance_id
-        );
-
-
-      setHistory(
-        updatedHistory
-      );
-
-
-    } catch (err) {
-
-      console.error(
-        "Forward to Dean error:",
-        err
-      );
-
-
-      setActionError(
-        err?.message ||
-        "Unable to forward grievance."
-      );
-
-
-    } finally {
-
-      setActionLoading(false);
-
-    }
-
+  function getApplicantName(g) {
+    if (!g) return "Applicant";
+    if (g.routing?.applicant_name) return g.routing.applicant_name;
+    if (g.applicant && typeof g.applicant === "object") return g.applicant.full_name || g.applicant.name || "Applicant";
+    if (typeof g.submitted_by === "string") return g.submitted_by;
+    return "CSJMU Applicant";
   }
 
-
-  /* =====================================================
-     LOADING
-  ====================================================== */
+  const navItems = [
+    { label: "Dashboard", path: "/associate-dean", icon: "▦" },
+    { label: "Cluster Grievance", path: "#", icon: "▤", active: true },
+  ];
 
   if (loading) {
-
     return (
-
-      <div className="authority-page authority-state-page">
-
-        <div className="authority-state-card">
-
-          <div className="authority-state-icon">
-            AI
-          </div>
-
-          <h3>
-            Loading grievance details
-          </h3>
-
-          <p>
-            Please wait while the grievance
-            information is being loaded.
-          </p>
-
-        </div>
-
-      </div>
-
-    );
-
-  }
-
-
-  /* =====================================================
-     ERROR
-  ====================================================== */
-
-  if (error) {
-
-    return (
-
       <div className="authority-page">
-
-
-        {/* HEADER */}
-
-        <header className="authority-header">
-
-          <Link
-            to="/associate-dean"
-            className="authority-brand"
-          >
-
-            <div className="authority-brand-mark">
-              N
-            </div>
-
-            <div className="authority-brand-text">
-
-              <strong>
-                NIVARAN
-              </strong>
-
-              <span>
-                AI-Assisted Grievance Redressal System
-              </span>
-
-            </div>
-
-          </Link>
-
-
-          <div className="authority-header-user">
-
-            <div className="authority-user-info">
-
-              <strong>
-                {userName}
-              </strong>
-
-              <span>
-                {userRole}
-              </span>
-
-            </div>
-
-
-            <div className="authority-user-avatar">
-              {userInitial}
-            </div>
-
-
-            <button
-              type="button"
-              className="authority-logout"
-              onClick={handleLogout}
-            >
-              Logout
-            </button>
-
-          </div>
-
-        </header>
-
-
-        {/* BODY */}
-
+        <AuthorityHeader userName="Associate Dean" userRole="ASSOCIATE_DEAN" portalHome="/associate-dean" onLogout={handleLogout} />
         <div className="authority-body">
-
-
-          <aside className="authority-sidebar">
-
-            <div className="authority-sidebar-label">
-              ASSOCIATE DEAN PORTAL
-            </div>
-
-
-            <nav className="authority-sidebar-nav">
-
-              <Link
-                to="/associate-dean"
-                className="authority-nav-item"
-              >
-
-                <span className="authority-nav-icon">
-                  ▦
-                </span>
-
-                <span>
-                  Dashboard
-                </span>
-
-              </Link>
-
-
-              <Link
-                to="/associate-dean"
-                className="authority-nav-item active"
-              >
-
-                <span className="authority-nav-icon">
-                  ≡
-                </span>
-
-                <span>
-                  My Grievances
-                </span>
-
-              </Link>
-
-
-              <Link
-                to="/associate-dean/analytics"
-                className="authority-nav-item"
-              >
-
-                <span className="authority-nav-icon">
-                  ◉
-                </span>
-
-                <span>
-                  Analytics
-                </span>
-
-              </Link>
-
-            </nav>
-
-          </aside>
-
-
+          <AuthoritySidebar portalLabel="ASSOCIATE DEAN PORTAL" navItems={navItems} userName="Associate Dean" userRole="ASSOCIATE_DEAN" onLogout={handleLogout} />
           <main className="authority-main">
-
-            <div className="authority-state-card error">
-
-              <div className="authority-state-icon error">
-                !
-              </div>
-
-              <h2>
-                Unable to load grievance
-              </h2>
-
-              <p>
-                {error}
-              </p>
-
-              <Link
-                to="/associate-dean"
-                className="authority-primary-button"
-              >
-                ← Back to Dashboard
-              </Link>
-
-            </div>
-
+            <LoadingState message="Loading cluster grievance details..." />
           </main>
-
         </div>
-
       </div>
-
     );
-
   }
 
-
-  if (!grievance) {
-    return null;
+  if (error && !grievance) {
+    return (
+      <div className="authority-page">
+        <AuthorityHeader userName="Associate Dean" userRole="ASSOCIATE_DEAN" portalHome="/associate-dean" onLogout={handleLogout} />
+        <div className="authority-body">
+          <AuthoritySidebar portalLabel="ASSOCIATE DEAN PORTAL" navItems={navItems} userName="Associate Dean" userRole="ASSOCIATE_DEAN" onLogout={handleLogout} />
+          <main className="authority-main">
+            <ErrorState title="Unable to load grievance" message={error} backLink="/associate-dean" backText="← Back to Dashboard" />
+          </main>
+        </div>
+      </div>
+    );
   }
 
+  if (!grievance) return null;
+
+  const categoryName = getCategoryName(grievance);
+  const clusterName = getClusterName(grievance);
+  const departmentName = getDepartmentName(grievance);
+  const applicantName = getApplicantName(grievance);
+  const timelineItems = history.length > 0 ? history : (grievance.timeline || []);
+
+  const isResolvedOrClosed = grievance.status === "RESOLVED" || grievance.status === "CLOSED";
+  const canAct = !isResolvedOrClosed;
 
   return (
-
     <div className="authority-page">
-
-
-      {/* =================================================
-          HEADER
-      ================================================= */}
-
-      <header className="authority-header">
-
-        <Link
-          to="/associate-dean"
-          className="authority-brand"
-        >
-
-          <div className="authority-brand-mark">
-            N
-          </div>
-
-
-          <div className="authority-brand-text">
-
-            <strong>
-              NIVARAN
-            </strong>
-
-            <span>
-              AI-Assisted Grievance Redressal System
-            </span>
-
-          </div>
-
-        </Link>
-
-
-        <div className="authority-header-user">
-
-          <div className="authority-user-info">
-
-            <strong>
-              {userName}
-            </strong>
-
-            <span>
-              {userRole}
-            </span>
-
-          </div>
-
-
-          <div className="authority-user-avatar">
-            {userInitial}
-          </div>
-
-
-          <button
-            type="button"
-            className="authority-logout"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-
-        </div>
-
-      </header>
-
-
-      {/* =================================================
-          BODY
-      ================================================= */}
+      <AuthorityHeader
+        userName={user?.full_name || user?.name || "Associate Dean"}
+        userRole={user?.role || "ASSOCIATE_DEAN"}
+        portalHome="/associate-dean"
+        onLogout={handleLogout}
+      />
 
       <div className="authority-body">
-
-
-        {/* =================================================
-            SIDEBAR
-        ================================================= */}
-
-        <aside className="authority-sidebar">
-
-          <div className="authority-sidebar-label">
-            ASSOCIATE DEAN PORTAL
-          </div>
-
-
-          <nav className="authority-sidebar-nav">
-
-
-            <Link
-              to="/associate-dean"
-              className="authority-nav-item"
-            >
-
-              <span className="authority-nav-icon">
-                ▦
-              </span>
-
-              <span>
-                Dashboard
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/associate-dean"
-              className="authority-nav-item active"
-            >
-
-              <span className="authority-nav-icon">
-                ≡
-              </span>
-
-              <span>
-                My Grievances
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/associate-dean/analytics"
-              className="authority-nav-item"
-            >
-
-              <span className="authority-nav-icon">
-                ◉
-              </span>
-
-              <span>
-                Analytics
-              </span>
-
-            </Link>
-
-          </nav>
-
-        </aside>
-
-
-        {/* =================================================
-            MAIN
-        ================================================= */}
+        <AuthoritySidebar
+          portalLabel="ASSOCIATE DEAN PORTAL"
+          navItems={navItems}
+          userName={user?.full_name || user?.name || "Associate Dean"}
+          userRole={user?.role || "ASSOCIATE_DEAN"}
+          onLogout={handleLogout}
+        />
 
         <main className="authority-main">
-
-
-          {/* BACK */}
-
-          <Link
-            to="/associate-dean"
-            className="authority-back-link"
-          >
+          {/* BREADCRUMB */}
+          <Link to="/associate-dean" className="detail-back-link">
             ← Back to Associate Dean Dashboard
           </Link>
 
-
-          {/* =================================================
-              DETAIL HEADER
-          ================================================= */}
-
-          <section className="authority-detail-header">
-
+          {/* PAGE HEADER */}
+          <header className="detail-page-header">
             <div>
-
-              <span className="authority-detail-id">
-                {grievance.grievance_id}
-              </span>
-
-
-              <h1>
-                {grievance.title}
-              </h1>
-
-
-              <p>
-                Submitted on{" "}
-                {formatDate(
-                  grievance.submitted_at
-                )}
-              </p>
-
+              <span className="table-id-chip">{grievance.grievance_id}</span>
+              <h1>{grievance.title}</h1>
+              <p>Submitted on {formatDate(grievance.submitted_at)} ({formatDateTime(grievance.submitted_at)})</p>
             </div>
 
-
-            <span
-              className={`authority-status-badge large ${
-                statusClass(
-                  grievance.status
-                )
-              }`}
-            >
-
-              {formatStatus(
-                grievance.status
-              )}
-
-            </span>
-
-          </section>
-
-
-          {/* =================================================
-              MESSAGES
-          ================================================= */}
-
-          {actionMessage && (
-
-            <div className="authority-success">
-
-              <span>
-                ✓
-              </span>
-
-              <p>
-                {actionMessage}
-              </p>
-
-            </div>
-
-          )}
-
-
-          {actionError && (
-
-            <div className="authority-error">
-
-              <span>
-                !
-              </span>
-
-              <p>
-                {actionError}
-              </p>
-
-            </div>
-
-          )}
-
-
-          {/* =================================================
-              DETAILS + AI
-          ================================================= */}
-
-          <section className="authority-detail-grid">
-
-
-            {/* GRIEVANCE DETAILS */}
-
-            <div className="authority-content-card">
-
-
-              <div className="authority-card-header">
-
-                <h2>
-                  Grievance Details
-                </h2>
-
-              </div>
-
-
-              <div className="authority-card-body">
-
-
-                <div className="authority-detail-field full">
-
-                  <label>
-                    Title
-                  </label>
-
-                  <p>
-                    {grievance.title}
-                  </p>
-
-                </div>
-
-
-                <div className="authority-detail-field full">
-
-                  <label>
-                    Description
-                  </label>
-
-                  <p className="authority-description">
-                    {grievance.description}
-                  </p>
-
-                </div>
-
-
-                <div className="authority-detail-fields-row">
-
-
-                  <div className="authority-detail-field">
-
-                    <label>
-                      Priority
-                    </label>
-
-                    <span
-                      className={`authority-priority ${
-                        grievance.priority
-                          ?.toLowerCase() ||
-                        ""
-                      }`}
-                    >
-                      {grievance.priority}
-                    </span>
-
-                  </div>
-
-
-                  <div className="authority-detail-field">
-
-                    <label>
-                      Submitted
-                    </label>
-
-                    <p>
-                      {formatDate(
-                        grievance.submitted_at
-                      )}
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-            {/* AI ANALYSIS */}
-
-            <div className="authority-content-card authority-ai-analysis-card">
-
-
-              <div className="authority-card-header">
-
-                <div className="authority-ai-title">
-
-                  <div className="authority-ai-small-icon">
-                    AI
-                  </div>
-
-                  <h2>
-                    AI Analysis
-                  </h2>
-
-                </div>
-
-              </div>
-
-
-              <div className="authority-card-body">
-
-
-                <div className="authority-ai-result-row">
-
-                  <span>
-                    Category
-                  </span>
-
-                  <strong>
-                    {grievance.category_id
-                      ? "Classified"
-                      : "Not classified"}
-                  </strong>
-
-                </div>
-
-
-                <div className="authority-ai-result-row">
-
-                  <span>
-                    Cluster
-                  </span>
-
-                  <strong>
-                    {grievance.cluster_id
-                      ? "Assigned"
-                      : "Not assigned"}
-                  </strong>
-
-                </div>
-
-
-                <div className="authority-ai-result-row">
-
-                  <span>
-                    AI Confidence
-                  </span>
-
-                  <strong>
-                    {grievance.ai_confidence != null
-                      ? `${(
-                          grievance.ai_confidence *
-                          100
-                        ).toFixed(2)}%`
-                      : "Not available"}
-                  </strong>
-
-                </div>
-
-
-                <div className="authority-ai-processing-status">
-
-                  <span>
-                    ●
-                  </span>
-
-                  AI processing completed
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          {/* =================================================
-              ASSOCIATE DEAN ACTIONS
-          ================================================= */}
-
-          {grievance.routing?.can_forward && (
-          <section className="authority-content-card authority-role-actions">
-
-
-            <div className="authority-card-header">
-
-              <div>
-
-                <h2>
-                  Associate Dean Actions
-                </h2>
-
-                <span>
-                  Final Administrative Review
-                </span>
-
-              </div>
-
-            </div>
-
-
-            <div className="authority-card-body">
-
-
-              <div className="authority-action-info">
-
-                <strong>
-                  Current Level: Associate Dean
-                </strong>
-
-                <p>
-                  Review the grievance and forward it
-                  to the Dean when final administrative
-                  consideration is required.
-                </p>
-
-              </div>
-
-
-              <div className="authority-detail-field full">
-
-                <label htmlFor="remarks">
-                  Remarks
-                </label>
-
-
-                <textarea
-                  id="remarks"
-                  value={remarks}
-                  onChange={(e) =>
-                    setRemarks(
-                      e.target.value
-                    )
-                  }
-                  placeholder="Add remarks before forwarding..."
-                  rows="4"
-                  disabled={actionLoading}
-                />
-
-              </div>
-
-
-              <div className="authority-action-buttons">
-
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+              {!isResolvedOrClosed && (
                 <button
                   type="button"
-                  className="authority-primary-button"
-                  onClick={
-                    handleForwardToDean
-                  }
-                  disabled={
-                    actionLoading ||
-                    grievance.status !==
-                      "ESCALATED"
-                  }
+                  className="authority-btn-secondary"
+                  onClick={() => setIsDocModalOpen(true)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
                 >
-
-                  {actionLoading
-                    ? "Forwarding..."
-                    : "Forward to Dean →"}
-
+                  📄 Request Additional Documents
                 </button>
-
-              </div>
-
+              )}
+              <StatusBadge status={grievance.status} />
             </div>
+          </header>
 
-          </section>
+          {/* NOTIFICATION MESSAGES */}
+          {actionMessage && (
+            <div className="authority-doc-success-msg" style={{ marginBottom: "20px" }}>
+              ✓ {actionMessage}
+            </div>
           )}
 
+          {actionError && (
+            <div className="dashboard-error" style={{ marginBottom: "20px" }}>
+              <span>!</span>
+              <p>{actionError}</p>
+            </div>
+          )}
 
-          {/* =================================================
-              TIMELINE
-          ================================================= */}
-
-          <section className="authority-content-card authority-timeline-card">
-
-
-            <div className="authority-section-header">
-
-              <div>
-
-                <h2>
-                  Grievance Timeline
-                </h2>
-
-                <p>
-                  Track every status update
-                  related to this grievance.
-                </p>
-
+          {/* TOP 2-COLUMN GRID: GRIEVANCE DETAILS + APPLICANT INFORMATION */}
+          <div className="detail-top-grid">
+            <section className="detail-card">
+              <div className="detail-card-header">
+                <h2>Grievance Details</h2>
               </div>
 
-
-              <span className="authority-timeline-count">
-
-                {history.length}{" "}
-
-                {history.length === 1
-                  ? "event"
-                  : "events"}
-
-              </span>
-
-            </div>
-
-
-            <div className="authority-timeline">
-
-
-              {history.length === 0 ? (
-
-                <div className="authority-timeline-empty">
-                  No status history available.
+              <div className="detail-card-body">
+                <div className="detail-field">
+                  <span>TITLE</span>
+                  <strong>{grievance.title}</strong>
                 </div>
 
-              ) : (
+                <div className="detail-field">
+                  <span>DESCRIPTION</span>
+                  <p>{grievance.description}</p>
+                </div>
 
-                history.map(
-                  (event, index) => (
+                <div className="detail-meta-grid">
+                  <div className="detail-field">
+                    <span>CATEGORY</span>
+                    <strong>{categoryName}</strong>
+                  </div>
 
-                    <div
-                      className="authority-timeline-item"
-                      key={
-                        event.id ||
-                        `${event.created_at}-${index}`
-                      }
-                    >
+                  <div className="detail-field">
+                    <span>CLUSTER</span>
+                    <strong>{clusterName}</strong>
+                  </div>
 
-                      <div className="authority-timeline-marker">
-                        ✓
-                      </div>
+                  <div className="detail-field">
+                    <span>PRIORITY</span>
+                    <div><PriorityBadge priority={grievance.priority} /></div>
+                  </div>
 
+                  <div className="detail-field">
+                    <span>REFERRED BY</span>
+                    <strong>{grievance.routing?.referred_by_name || "Assistant Dean"}</strong>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-                      <div className="authority-timeline-content">
+            <ApplicantInfoCard
+              applicant={
+                grievance.applicant || {
+                  full_name: applicantName,
+                  department: departmentName,
+                  subject_name: grievance.subject_name || "General",
+                }
+              }
+            />
+          </div>
 
-                        <div className="authority-timeline-top">
+          {/* AI AUTONOMOUS ANALYSIS CARD */}
+          <div style={{ marginTop: "24px" }}>
+            <AIAnalysisCard
+              predictedCategory={categoryName}
+              finalCategory={grievance.final_category?.name}
+              clusterName={clusterName}
+              confidenceScore={grievance.ai_confidence}
+              isOverridden={grievance.category_overridden}
+            />
+          </div>
 
-                          <strong>
-                            {formatStatus(
-                              event.new_status
-                            )}
-                          </strong>
+          {/* REQUESTED SUPPORTING DOCUMENTS SECTION */}
+          {grievance.document_requests && grievance.document_requests.length > 0 && (
+            <div style={{ marginTop: "24px" }}>
+              <DocumentRequestsSection
+                documentRequests={grievance.document_requests}
+                grievanceId={grievance.grievance_id || grievance.id}
+                isApplicant={false}
+                onRefresh={loadGrievance}
+              />
+            </div>
+          )}
 
-                          <span>
-                            {formatDateTime(
-                              event.created_at
-                            )}
-                          </span>
+          {/* AUTHORITY ACTIONS SECTION */}
+          {canAct && (
+            <section className="detail-card authority-decision-card">
+              <div className="detail-card-header">
+                <div>
+                  <h2>Cluster Redressal Actions</h2>
+                  <p>Resolve this grievance or escalate to Dean R&D for university-wide intervention.</p>
+                </div>
+                <span className="decision-required-badge">ACTION REQUIRED</span>
+              </div>
 
+              <div className="detail-card-body" style={{ padding: "1.5rem" }}>
+                <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", margin: "16px 0" }}>
+                  <button
+                    type="button"
+                    className="authority-primary-button"
+                    style={{ background: "linear-gradient(135deg, #059669 0%, #047857 100%)", border: "1px solid #059669", padding: "12px 24px", fontSize: "14px" }}
+                    onClick={() => {
+                      setResolveModalOpen(true);
+                      setResolveError("");
+                    }}
+                  >
+                    ✓ Resolve Grievance Directly
+                  </button>
+                </div>
+
+                {/* ESCALATE FORM */}
+                <form onSubmit={handleEscalateGrievance} style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid #f1f5f9" }}>
+                  {(() => {
+                    const nextTargetName = grievance.routing?.next_authority_name || grievance.next_authority_name;
+                    const labelDeanText = nextTargetName ? `Dean (${nextTargetName})` : "Dean R&D";
+
+                    return (
+                      <>
+                        <div className="form-group">
+                          <label htmlFor="escalate-remarks">Or Escalate to {labelDeanText} with Remarks</label>
+                          <textarea
+                            id="escalate-remarks"
+                            rows={3}
+                            value={remarks}
+                            onChange={(e) => setRemarks(e.target.value)}
+                            placeholder={`Explain the administrative or policy justification for escalating to ${labelDeanText}...`}
+                            disabled={actionLoading}
+                          />
                         </div>
 
+                        <button
+                          type="submit"
+                          className="authority-primary-button"
+                          style={{ background: "linear-gradient(135deg, #881337 0%, #4c0519 100%)" }}
+                          disabled={actionLoading || !remarks.trim()}
+                        >
+                          {actionLoading ? "Escalating..." : `▲ Escalate to ${labelDeanText}`}
+                        </button>
+                      </>
+                    );
+                  })()}
+                </form>
+              </div>
+            </section>
+          )}
 
-                        {event.reason && (
+          {/* RESOLUTION RECORD SUMMARY */}
+          {(isResolvedOrClosed || grievance.resolution_notes) && (
+            <section className="detail-card authority-resolution-card">
+              <div className="detail-card-header">
+                <div>
+                  <h2>Resolution & Redressal Record</h2>
+                  <span>Formally recorded resolution info</span>
+                </div>
+                <StatusBadge status={grievance.status} />
+              </div>
 
-                          <p>
-                            {event.reason}
-                          </p>
+              <div className="detail-card-body" style={{ padding: "1.5rem" }}>
+                <div className="detail-field full">
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b" }}>RESOLUTION NOTES</span>
+                  <div className="authority-resolution-notes-box" style={{ marginTop: "6px" }}>
+                    {grievance.resolution_notes || "Formal cluster resolution completed."}
+                  </div>
+                </div>
 
-                        )}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+                  <div className="detail-field">
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b" }}>RESOLVED BY</span>
+                    <strong style={{ fontSize: "14px", marginTop: "4px", display: "block" }}>
+                      {grievance.resolved_by_name || "Associate Dean"}
+                    </strong>
+                  </div>
 
-                      </div>
+                  <div className="detail-field">
+                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b" }}>RESOLVED AT</span>
+                    <strong style={{ fontSize: "14px", marginTop: "4px", display: "block" }}>
+                      {formatDateTime(grievance.resolved_at)}
+                    </strong>
+                  </div>
+                </div>
 
-                    </div>
+                {grievance.status === "RESOLVED" && (
+                  <div className="authority-resolution-pending-note" style={{ marginTop: "1rem" }}>
+                    ℹ️ <strong>Status Note:</strong> This grievance has entered the <strong>Post-Resolution Review Pipeline</strong> for Manager verification and formal closure.
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
 
-                  )
-                )
+          {/* ATTACHED DOCUMENTS */}
+          <section className="detail-card authority-documents-card">
+            <div className="detail-card-header">
+              <div>
+                <h2>Attached Documents & Proofs</h2>
+                <p>Applicant submissions, official orders, and verification files.</p>
+              </div>
 
-              )}
-
+              <div>
+                <input
+                  id="assoc-doc-upload"
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt,.csv,.xlsx"
+                  onChange={handleDocumentUpload}
+                  disabled={docUploading}
+                  style={{ display: "none" }}
+                />
+                <label
+                  htmlFor="assoc-doc-upload"
+                  className="authority-doc-upload-btn"
+                  style={{ cursor: docUploading ? "not-allowed" : "pointer" }}
+                >
+                  {docUploading ? "Uploading..." : "+ Upload Document"}
+                </label>
+              </div>
             </div>
 
+            <div style={{ padding: "1.5rem" }}>
+              {docMessage && (
+                <div className="authority-doc-success-msg">✓ {docMessage}</div>
+              )}
+              {docError && (
+                <div className="authority-form-error"><span>!</span><p>{docError}</p></div>
+              )}
+
+              <div className="authority-documents-list">
+                {(!grievance.documents || grievance.documents.length === 0) ? (
+                  <div className="authority-doc-empty">No documents attached to this grievance.</div>
+                ) : (
+                  grievance.documents.map((doc) => (
+                    <div key={doc.id} className="authority-doc-card">
+                      <div className="authority-doc-card-info">
+                        <span className="authority-doc-icon">{doc.file_name.endsWith(".pdf") ? "📄" : "📎"}</span>
+                        <div>
+                          <strong className="authority-doc-name">{doc.file_name}</strong>
+                          <div className="authority-doc-meta">
+                            <span className="applicant-doc-type-badge">{doc.document_type || "ATTACHMENT"}</span>
+                            <span>•</span>
+                            <span>{(doc.file_size / 1024).toFixed(1)} KB</span>
+                            {doc.uploader_name && <span>• by {doc.uploader_name}</span>}
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="authority-doc-download-btn"
+                        onClick={() => handleDocumentDownload(doc)}
+                        title="Download file"
+                      >
+                        Download ⬇
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </section>
 
+          {/* TIMELINE / HISTORY */}
+          <section className="detail-card timeline-card">
+            <div className="detail-card-header">
+              <h2>Grievance Timeline & Audit History</h2>
+              <span>{timelineItems.length} events</span>
+            </div>
 
+            <div className="timeline-body">
+              {timelineItems.length === 0 ? (
+                <div style={{ padding: "20px", color: "#64748b", textAlign: "center" }}>No timeline events recorded.</div>
+              ) : (
+                timelineItems.map((event, index) => (
+                  <div className="timeline-item" key={event.id || index}>
+                    <div className="timeline-marker">✓</div>
+                    <div className="timeline-content">
+                      <strong>{formatStatus(event.new_status || event.status)}</strong>
+                      <p>{event.reason || event.description || "Status updated"}</p>
+                      <span>{formatDateTime(event.created_at || event.date)}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
         </main>
-
       </div>
 
+      {/* RESOLVE MODAL */}
+      {resolveModalOpen && (
+        <div className="modal-backdrop">
+          <div className="modal-card">
+            <div className="modal-header">
+              <div>
+                <h2>Resolve Cluster Grievance</h2>
+                <span className="table-id-chip">{grievance.grievance_id}</span>
+              </div>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setResolveModalOpen(false)}
+                disabled={resolveLoading}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleResolveGrievance}>
+              <div className="modal-body">
+                {resolveError && (
+                  <div className="dashboard-error" style={{ marginBottom: "16px" }}>
+                    <span>!</span>
+                    <p>{resolveError}</p>
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label htmlFor="assoc-modal-resolution-notes">
+                    Resolution Notes & Redressal Directives *
+                  </label>
+                  <textarea
+                    id="assoc-modal-resolution-notes"
+                    rows={5}
+                    value={resolutionNotes}
+                    onChange={(e) => setResolutionNotes(e.target.value)}
+                    placeholder="Explain the cluster-level resolution and actions ordered..."
+                    disabled={resolveLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setResolveModalOpen(false)}
+                  disabled={resolveLoading}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="authority-primary-button"
+                  style={{ background: "linear-gradient(135deg, #059669 0%, #047857 100%)", border: "1px solid #059669" }}
+                  disabled={resolveLoading || !resolutionNotes.trim()}
+                >
+                  {resolveLoading ? "Submitting Resolution..." : "Confirm & Resolve Grievance →"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* REQUEST ADDITIONAL DOCUMENTS MODAL */}
+      <RequestDocumentModal
+        isOpen={isDocModalOpen}
+        onClose={() => setIsDocModalOpen(false)}
+        grievanceId={grievance.grievance_id || grievance.id}
+        onSuccess={loadGrievance}
+      />
     </div>
-
   );
-
 }
-
 
 export default AssociateDeanGrievanceDetail;

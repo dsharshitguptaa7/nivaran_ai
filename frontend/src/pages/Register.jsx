@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../services/api";
 
 function Register() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ function Register() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [department, setDepartment] = useState("");
+  const [phdRegistrationNumber, setPhdRegistrationNumber] = useState("");
   const [subjectId, setSubjectId] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -40,7 +42,7 @@ function Register() {
         setError("");
 
         const response = await fetch(
-          "http://127.0.0.1:8000/api/v1/subjects"
+          `${API_BASE_URL}/subjects`
         );
 
         if (!response.ok) {
@@ -99,7 +101,7 @@ function Register() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/v1/auth/register",
+        `${API_BASE_URL}/auth/register`,
         {
           method: "POST",
 
@@ -112,6 +114,7 @@ function Register() {
             email: email,
             password: password,
             department: department || null,
+            phd_registration_number: phdRegistrationNumber.trim() || null,
             subject_id: subjectId,
           }),
         }
@@ -158,35 +161,37 @@ function Register() {
     <div className="auth-page">
 
       {/* =====================================================
-          LEFT BRAND SECTION
+          LEFT BRAND SECTION (MATCHING LOGIN PAGE)
       ====================================================== */}
-      
-      
-      <div className="auth-brand">
+      <div className="login-header">
+
+        <div className="login-secure">
+          CSJM PORTAL
+        </div>
 
         <Link
           to="/"
-          className="auth-logo"
+          className="login-logo"
         >
           NIVARAN<span>.AI</span>
         </Link>
 
-         <div className="login-tagline">
+        <div className="login-tagline">
           AI-Assisted Grievance Redressal for
           Students, Faculty & Staff
         </div>
 
 
-        <div className="auth-brand-content">
+        <div className="login-brand-content" style={{ marginTop: "44px", marginBottom: "0" }}>
 
-          <div className="auth-badge">
+          <div className="login-brand-badge">
             JOIN NIVARAN-AI
           </div>
 
 
           <h1>
             Your grievance.
-            <span>Your voice.</span>
+            <span> Your voice.</span>
           </h1>
 
 
@@ -197,21 +202,21 @@ function Register() {
           </p>
 
 
-          <div className="auth-features">
+          <div className="login-benefits">
 
-            <div>
+            <div className="login-benefit">
               <span>✓</span>
-              Submit grievances digitally
+              <p>Submit grievances digitally</p>
             </div>
 
-            <div>
+            <div className="login-benefit">
               <span>✓</span>
-              Track grievance status
+              <p>Track grievance status</p>
             </div>
 
-            <div>
+            <div className="login-benefit">
               <span>✓</span>
-              Receive transparent updates
+              <p>Receive transparent updates</p>
             </div>
 
           </div>
@@ -321,6 +326,28 @@ function Register() {
                 placeholder="Enter your email address"
                 autoComplete="email"
                 required
+              />
+
+            </div>
+
+
+            {/* PhD Registration Number */}
+
+            <div className="form-group">
+
+              <label htmlFor="phdRegistrationNumber">
+                PhD Registration Number <span style={{ color: "#64748b", fontWeight: "normal", fontSize: "12px" }}>(e.g. CSJMU/PHD/2025/1234)</span>
+              </label>
+
+              <input
+                id="phdRegistrationNumber"
+                type="text"
+                value={phdRegistrationNumber}
+                onChange={(e) =>
+                  setPhdRegistrationNumber(e.target.value)
+                }
+                placeholder="CSJMU/PHD/YYYY/XXXX"
+                autoCapitalize="characters"
               />
 
             </div>

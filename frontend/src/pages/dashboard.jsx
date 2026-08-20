@@ -1,912 +1,274 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import {
-  getCurrentUser,
-  logoutUser,
-} from "../services/authService";
+import { getCurrentUser, logoutUser } from "../services/authService";
+import { getMyGrievances } from "../services/grievanceService";
 
-import {
-  getMyGrievances,
-} from "../services/grievanceService";
+import AuthorityHeader from "../components/AuthorityHeader";
+import AuthoritySidebar from "../components/AuthoritySidebar";
+import LiveDateTime from "../components/LiveDateTime";
+import StatCard from "../components/StatCard";
+import StatusBadge from "../components/StatusBadge";
+import PriorityBadge from "../components/PriorityBadge";
+import EmptyState from "../components/EmptyState";
+import LoadingState from "../components/LoadingState";
+import ErrorState from "../components/ErrorState";
 
 
 function Dashboard() {
-
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
   const [grievances, setGrievances] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-
-  /* =====================================================
-     LOAD DASHBOARD
-  ====================================================== */
-
+  // =====================================================
+  // LOAD DASHBOARD
+  // =====================================================
   useEffect(() => {
     loadDashboard();
   }, []);
 
-
   const loadDashboard = async () => {
-
     try {
-
       setLoading(true);
       setError("");
 
-      const [
-        currentUser,
-        myGrievances,
-      ] = await Promise.all([
+      const [currentUser, myGrievances] = await Promise.all([
         getCurrentUser(),
         getMyGrievances(),
       ]);
 
       setUser(currentUser);
-      setGrievances(myGrievances);
-
+      setGrievances(Array.isArray(myGrievances) ? myGrievances : []);
     } catch (err) {
-
-      console.error(
-        "Dashboard loading error:",
-        err
-      );
-
+      console.error("Dashboard loading error:", err);
       if (
-        err.message
-          ?.toLowerCase()
-          .includes("401") ||
-        err.message
-          ?.toLowerCase()
-          .includes("unauthorized")
+        err.message?.toLowerCase().includes("401") ||
+        err.message?.toLowerCase().includes("unauthorized")
       ) {
-
         logoutUser();
         navigate("/login");
-
         return;
       }
-
-      setError(
-        err.message ||
-        "Unable to load dashboard data."
-      );
-
+      setError(err.message || "Unable to load dashboard data.");
     } finally {
-
       setLoading(false);
-
     }
   };
 
-
-  /* =====================================================
-     STATISTICS
-  ====================================================== */
-
+  // =====================================================
+  // STATISTICS
+  // =====================================================
   const statistics = useMemo(() => {
+    const total = grievances.length;
+    const pending = grievances.filter(
+      (g) => g.status === "PENDING_REVIEW" || g.status === "SUBMITTED" || g.status === "AI_PROCESSING"
+    ).length;
+    const inProgress = grievances.filter(
+      (g) => g.status === "ASSIGNED" || g.status === "IN_PROGRESS" || g.status === "ESCALATED"
+    ).length;
+    const resolved = grievances.filter(
+      (g) => g.status === "RESOLVED" || g.status === "CLOSED"
+    ).length;
 
-    const total =
-      grievances.length;
-
-    const pending =
-      grievances.filter(
-        (g) =>
-          g.status === "PENDING_REVIEW" ||
-          g.status === "SUBMITTED" ||
-          g.status === "AI_PROCESSING"
-      ).length;
-
-    const inProgress =
-      grievances.filter(
-        (g) =>
-          g.status === "IN_PROGRESS"
-      ).length;
-
-    const resolved =
-      grievances.filter(
-        (g) =>
-          g.status === "RESOLVED" ||
-          g.status === "CLOSED"
-      ).length;
-
-    return {
-      total,
-      pending,
-      inProgress,
-      resolved,
-    };
-
+    return { total, pending, inProgress, resolved };
   }, [grievances]);
 
+  const recentGrievances = useMemo(() => {
+    return [...grievances].slice(0, 5);
+  }, [grievances]);
 
-  /* =====================================================
-     RECENT GRIEVANCES
-  ====================================================== */
-
-  const recentGrievances =
-    grievances.slice(0, 5);
-
-
-  /* =====================================================
-     HELPERS
-  ====================================================== */
-
-  const formatDate = (dateString) => {
-
-    if (!dateString) {
-      return "-";
-    }
-
-    return new Date(
-      dateString
-    ).toLocaleDateString(
-      "en-IN",
-      {
+  const formatDate = (date) => {
+    if (!date) return "-";
+    try {
+      return new Date(date).toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "short",
         year: "numeric",
-      }
-    );
-  };
-
-
-  const formatStatus = (status) => {
-
-    if (!status) {
-      return "-";
+      });
+    } catch {
+      return String(date);
     }
-
-    return status.replaceAll(
-      "_",
-      " "
-    );
-
   };
 
-
-  /* =====================================================
-     LOGOUT
-  ====================================================== */
+  function getCategoryName(g) {
+    if (!g) return "General";
+    if (g.final_category && typeof g.final_category === "object") return g.final_category.name || "General";
+    if (g.category && typeof g.category === "object") return g.category.name || "General";
+    if (typeof g.category === "string") return g.category;
+    return "General";
+  }
 
   const handleLogout = () => {
-
     logoutUser();
     navigate("/login");
-
   };
 
-
-  /* =====================================================
-     LOADING
-  ====================================================== */
-
-  if (loading) {
-
-    return (
-
-      <div className="applicant-page applicant-state-page">
-
-        <div className="applicant-state-card">
-
-          <div className="applicant-state-icon">
-            N
-          </div>
-
-          <p>
-            Loading your NIVARAN dashboard...
-          </p>
-
-        </div>
-
-      </div>
-
-    );
-
-  }
-
-
-  /* =====================================================
-     ERROR
-  ====================================================== */
-
-  if (error) {
-
-    return (
-
-      <div className="applicant-page applicant-state-page">
-
-        <div className="applicant-state-card">
-
-          <div className="applicant-state-icon error">
-            !
-          </div>
-
-          <h2>
-            Unable to load dashboard
-          </h2>
-
-          <p>
-            {error}
-          </p>
-
-          <button
-            className="applicant-primary-button"
-            onClick={loadDashboard}
-          >
-            Try Again
-          </button>
-
-        </div>
-
-      </div>
-
-    );
-
-  }
-
-
-  /* =====================================================
-     USER DATA
-  ====================================================== */
-
-  const userName =
-    user?.full_name || "Applicant";
-
-  const userRole =
-    user?.role
-      ? user.role.replaceAll(
-          "_",
-          " "
-        )
-      : "Applicant";
-
-  const userInitial =
-    userName
-      .charAt(0)
-      .toUpperCase();
-
-
-  /* =====================================================
-     LATEST GRIEVANCE
-  ====================================================== */
-
-  const latestGrievance =
-    grievances.length > 0
-      ? grievances[0]
-      : null;
-
+  const navItems = [
+    { label: "Dashboard", path: "/dashboard", icon: "⌂", active: true },
+    { label: "Submit Grievance", path: "/dashboard/submit", icon: "✎" },
+    { label: "My Grievances", path: "/dashboard/grievances", icon: "≡", count: statistics.total },
+  ];
 
   return (
+    <div className="authority-page">
+      {/* GLOBAL HEADER */}
+      <AuthorityHeader
+        userName={user?.full_name || user?.name || "Student / Applicant"}
+        userRole={user?.role || "APPLICANT"}
+        portalHome="/dashboard"
+        onLogout={handleLogout}
+      />
 
-    <div className="applicant-page">
+      <div className="authority-body">
+        {/* GLOBAL SIDEBAR */}
+        <AuthoritySidebar
+          portalLabel="STUDENT / APPLICANT PORTAL"
+          navItems={navItems}
+          userName={user?.full_name || user?.name || "Applicant"}
+          userRole={user?.role || "APPLICANT"}
+          onLogout={handleLogout}
+        />
 
-
-      {/* =================================================
-          HEADER
-      ================================================= */}
-
-      <header className="applicant-header">
-
-        <Link
-          to="/dashboard"
-          className="applicant-brand"
-        >
-
-          <div className="applicant-brand-mark">
-            N
-          </div>
-
-          <div className="applicant-brand-text">
-
-            <strong>
-              NIVARAN
-            </strong>
-
-            <span>
-              Grievance Redressal System
-            </span>
-
-          </div>
-
-        </Link>
-
-
-        <div className="applicant-header-user">
-
-          <div className="applicant-user-info">
-
-            <strong>
-              {userName}
-            </strong>
-
-            <span>
-              {userRole}
-            </span>
-
-          </div>
-
-
-          <div className="applicant-user-avatar">
-            {userInitial}
-          </div>
-
-
-          <button
-            type="button"
-            className="applicant-logout"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-
-        </div>
-
-      </header>
-
-
-      {/* =================================================
-          BODY
-      ================================================= */}
-
-      <div className="applicant-body">
-
-
-        {/* =================================================
-            SIDEBAR
-        ================================================= */}
-
-        <aside className="applicant-sidebar">
-
-          <div className="applicant-sidebar-label">
-            APPLICANT
-          </div>
-
-
-          <nav className="applicant-sidebar-nav">
-
-
-            <Link
-              to="/dashboard"
-              className="applicant-nav-item active"
-            >
-
-              <span className="applicant-nav-icon">
-                ▦
-              </span>
-
-              <span>
-                Dashboard
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/dashboard/grievances"
-              className="applicant-nav-item"
-            >
-
-              <span className="applicant-nav-icon">
-                ≡
-              </span>
-
-              <span>
-                My Grievances
-              </span>
-
-            </Link>
-
-
-            <Link
-              to="/dashboard/submit"
-              className="applicant-nav-item"
-            >
-
-              <span className="applicant-nav-icon">
-                +
-              </span>
-
-              <span>
-                Submit Grievance
-              </span>
-
-            </Link>
-
-
-          </nav>
-
-        </aside>
-
-
-        {/* =================================================
-            MAIN CONTENT
-        ================================================= */}
-
-        <main className="applicant-main">
-
-
-          {/* =================================================
-              PAGE HEADER
-          ================================================= */}
-
-          <section className="applicant-page-header">
-
+        {/* MAIN CONTENT */}
+        <main className="authority-main">
+          {/* PAGE HEADER */}
+          <section className="authority-page-header">
             <div>
-
-              <div className="applicant-page-eyebrow">
-                SECURE GRIEVANCE MANAGEMENT SYSTEM
-              </div>
-
-              <h1>
-                Welcome, {userName}
-              </h1>
-
-              <p>
-                Submit and track your grievances
-              </p>
-
+              <div className="authority-page-eyebrow">CSJMU STUDENT & APPLICANT REDRESSAL</div>
+              <h1>Welcome, {user?.full_name || "Applicant"}</h1>
+              <p>Submit academic or administrative grievances, track real-time redressal progress, and view resolution history.</p>
             </div>
 
-
-            <Link
-              to="/dashboard/submit"
-              className="applicant-primary-button"
-            >
-              + Submit Grievance
-            </Link>
-
+            <div className="authority-header-actions">
+              <LiveDateTime format="full" />
+              <Link to="/dashboard/submit" className="authority-primary-button">
+                + Submit New Grievance
+              </Link>
+            </div>
           </section>
 
+          {/* ERROR STATE */}
+          {error && (
+            <ErrorState
+              title="Unable to load dashboard"
+              message={error}
+              onRetry={loadDashboard}
+            />
+          )}
 
-          {/* =================================================
-              STATISTICS
-          ================================================= */}
-
-          <section className="applicant-stat-grid">
-
-
-            <div className="applicant-stat-card">
-
-              <div className="applicant-stat-icon maroon">
-                #
-              </div>
-
-              <div className="applicant-stat-content">
-
-                <strong>
-                  {String(
-                    statistics.total
-                  ).padStart(2, "0")}
-                </strong>
-
-                <span>
-                  Total Grievances
-                </span>
-
-              </div>
-
-            </div>
-
-
-            <div className="applicant-stat-card">
-
-              <div className="applicant-stat-icon gold">
-                !
-              </div>
-
-              <div className="applicant-stat-content">
-
-                <strong>
-                  {String(
-                    statistics.pending
-                  ).padStart(2, "0")}
-                </strong>
-
-                <span>
-                  Pending
-                </span>
-
-              </div>
-
-            </div>
-
-
-            <div className="applicant-stat-card">
-
-              <div className="applicant-stat-icon progress">
-                ↻
-              </div>
-
-              <div className="applicant-stat-content">
-
-                <strong>
-                  {String(
-                    statistics.inProgress
-                  ).padStart(2, "0")}
-                </strong>
-
-                <span>
-                  In Progress
-                </span>
-
-              </div>
-
-            </div>
-
-
-            <div className="applicant-stat-card">
-
-              <div className="applicant-stat-icon success">
-                ✓
-              </div>
-
-              <div className="applicant-stat-content">
-
-                <strong>
-                  {String(
-                    statistics.resolved
-                  ).padStart(2, "0")}
-                </strong>
-
-                <span>
-                  Resolved
-                </span>
-
-              </div>
-
-            </div>
-
+          {/* KPI CARDS GRID */}
+          <section className="authority-stat-grid">
+            <StatCard
+              icon="▤"
+              title="Total Submitted"
+              value={statistics.total}
+              subtitle="All grievances filed"
+              variant="default"
+            />
+            <StatCard
+              icon="⏳"
+              title="Pending Review"
+              value={statistics.pending}
+              subtitle="Under review / Intake"
+              variant="orange"
+            />
+            <StatCard
+              icon="◉"
+              title="In Progress"
+              value={statistics.inProgress}
+              subtitle="With authority officer"
+              variant="blue"
+            />
+            <StatCard
+              icon="✓"
+              title="Resolved & Closed"
+              value={statistics.resolved}
+              subtitle="Successfully redressed"
+              variant="green"
+            />
           </section>
 
-
-          {/* =================================================
-              MY GRIEVANCES
-          ================================================= */}
-
-          <section className="applicant-content-card">
-
-
-            <div className="applicant-section-header">
-
+          {/* RECENT GRIEVANCES TABLE */}
+          <section className="authority-content-card data-table-card">
+            <div className="authority-card-header" style={{ padding: "20px 24px 16px" }}>
               <div>
-
-                <h2>
-                  My Grievances
-                </h2>
-
-                <p>
-                  Track the status and progress
-                  of your grievances
-                </p>
-
+                <h2>Recent Grievances</h2>
+                <p>Track current status and resolution history of your filed grievances.</p>
               </div>
 
-
-              <Link
-                to="/dashboard/grievances"
-                className="applicant-view-all"
-              >
-                View All
+              <Link to="/dashboard/grievances" className="table-action-link" style={{ fontSize: "12px", fontWeight: 700 }}>
+                View All Grievances →
               </Link>
-
             </div>
 
-
-            <div className="applicant-grievance-list">
-
-              {recentGrievances.length === 0 ? (
-
-                <div className="applicant-empty-state">
-
-                  <div className="applicant-empty-icon">
-                    +
-                  </div>
-
-                  <h3>
-                    No grievances yet
-                  </h3>
-
-                  <p>
-                    Submit your first grievance
-                    to get started.
-                  </p>
-
-                  <Link
-                    to="/dashboard/submit"
-                    className="applicant-primary-button"
-                  >
-                    Submit Grievance
-                  </Link>
-
-                </div>
-
-              ) : (
-
-                recentGrievances.map(
-                  (grievance) => (
-
-                    <div
-                      className="applicant-grievance-row"
-                      key={grievance.id}
-                    >
-
-                      <div className="applicant-grievance-main">
-
-                        <span className="applicant-grievance-id">
-                          {grievance.grievance_id}
-                        </span>
-
-                        <strong>
-                          {grievance.title}
-                        </strong>
-
-                        <span className="applicant-grievance-date">
-                          Submitted on{" "}
-                          {formatDate(
-                            grievance.created_at
-                          )}
-                        </span>
-
-                      </div>
-
-
-                      <div className="applicant-grievance-meta">
-
-                        <span
-                          className={`applicant-status-badge ${
-                            grievance.status
-                              ?.toLowerCase()
-                              .replaceAll(
-                                "_",
-                                "-"
-                              )
-                          }`}
-                        >
-                          {formatStatus(
-                            grievance.status
-                          )}
-                        </span>
-
-
-                        <span
-                          className={`applicant-priority ${
-                            grievance.priority
-                              ?.toLowerCase()
-                          }`}
-                        >
-                          {grievance.priority}
-                        </span>
-
-
-                        <span className="applicant-updated">
-
-                          Last updated:{" "}
-
-                          {formatDate(
-                            grievance.updated_at ||
-                            grievance.created_at
-                          )}
-
-                        </span>
-
-
-                        <Link
-                          to={`/dashboard/grievances/${grievance.grievance_id}`}
-                          className="applicant-outline-button"
-                        >
-                          {grievance.status ===
-                          "RESOLVED"
-                            ? "View"
-                            : "Track"}
-                        </Link>
-
-                      </div>
-
-                    </div>
-
-                  )
-                )
-
-              )}
-
-            </div>
-
-          </section>
-
-
-          {/* =================================================
-              QUICK ACTIONS
-          ================================================= */}
-
-          <section className="applicant-content-card">
-
-            <div className="applicant-section-title">
-
-              <h2>
-                Quick Actions
-              </h2>
-
-            </div>
-
-
-            <div className="applicant-quick-actions">
-
-
-              <Link
-                to="/dashboard/submit"
-                className="applicant-quick-action"
-              >
-
-                <div className="applicant-quick-icon maroon">
-                  +
-                </div>
-
-                <div>
-
-                  <strong>
-                    Submit Grievance
-                  </strong>
-
-                  <span>
-                    Register a new grievance
-                  </span>
-
-                </div>
-
-              </Link>
-
-
-              <Link
-                to="/dashboard/grievances"
-                className="applicant-quick-action"
-              >
-
-                <div className="applicant-quick-icon neutral">
-                  #
-                </div>
-
-                <div>
-
-                  <strong>
-                    My Grievances
-                  </strong>
-
-                  <span>
-                    View all your grievances
-                  </span>
-
-                </div>
-
-              </Link>
-
-            </div>
-
-          </section>
-
-
-          {/* =================================================
-              RECENT UPDATE
-          ================================================= */}
-
-          <section className="applicant-content-card">
-
-            <div className="applicant-section-header">
-
-              <div>
-
-                <h2>
-                  Recent Update
-                </h2>
-
-                <p>
-                  Latest update related to
-                  your grievances
-                </p>
-
-              </div>
-
-            </div>
-
-
-            {latestGrievance ? (
-
-              <div className="applicant-notification">
-
-                <div className="applicant-notification-icon">
-                  !
-                </div>
-
-                <div className="applicant-notification-content">
-
-                  <strong>
-                    Grievance{" "}
-                    {latestGrievance.grievance_id}
-                    {" "}has been updated
-                  </strong>
-
-                  <p>
-                    Your grievance is currently{" "}
-                    {formatStatus(
-                      latestGrievance.status
-                    ).toLowerCase()}
-                    .
-                  </p>
-
-                  <span>
-                    {formatDate(
-                      latestGrievance.updated_at ||
-                      latestGrievance.created_at
-                    )}
-                  </span>
-
-                </div>
-
-              </div>
-
+            {loading ? (
+              <LoadingState message="Loading your grievances..." />
+            ) : recentGrievances.length === 0 ? (
+              <EmptyState
+                icon="📝"
+                title="No grievances submitted yet"
+                description="Have an academic, administrative, or fee issue? Submit a grievance to receive assisted redressal."
+                actionText="+ Submit Your First Grievance"
+                actionLink="/dashboard/submit"
+              />
             ) : (
-
-              <div className="applicant-no-notification">
-                No recent updates.
+              <div className="data-table-wrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Tracking ID</th>
+                      <th>Grievance Title</th>
+                      <th>Category</th>
+                      <th>Priority</th>
+                      <th>Submitted Date</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: "right" }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentGrievances.map((g) => (
+                      <tr key={g.id || g.grievance_id}>
+                        <td>
+                          <span className="table-id-chip">{g.grievance_id}</span>
+                        </td>
+                        <td>
+                          <strong className="table-row-title">{g.title}</strong>
+                          <p className="table-row-desc">{g.description}</p>
+                        </td>
+                        <td>
+                          <span className="table-cat-badge">{getCategoryName(g)}</span>
+                        </td>
+                        <td>
+                          <PriorityBadge priority={g.priority} />
+                        </td>
+                        <td>
+                          <span className="table-date-text">{formatDate(g.submitted_at)}</span>
+                        </td>
+                        <td>
+                          <StatusBadge status={g.status} />
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <Link
+                            to={`/dashboard/grievances/${g.grievance_id}`}
+                            className="table-action-link"
+                          >
+                            Track Progress →
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-
             )}
-
           </section>
-
-
-          {/* =================================================
-              AI INFORMATION
-          ================================================= */}
-
-          <section className="applicant-ai-card">
-
-            <div className="applicant-ai-icon">
-              AI
-            </div>
-
-
-            <div className="applicant-ai-content">
-
-              <span>
-                AI-ASSISTED GRIEVANCE MANAGEMENT
-              </span>
-
-              <h3>
-                NIVARAN-AI Intelligence
-              </h3>
-
-              <p>
-                Your grievances are analyzed using
-                AI-assisted classification and
-                semantic clustering before entering
-                the administrative review workflow.
-              </p>
-
-            </div>
-
-
-            <div className="applicant-ai-status">
-              <span>●</span>
-              AI System Active
-            </div>
-
-          </section>
-
-
         </main>
-
       </div>
-
     </div>
-
   );
-
 }
-
 
 export default Dashboard;

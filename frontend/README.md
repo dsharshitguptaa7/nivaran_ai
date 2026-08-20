@@ -1,16 +1,43 @@
-# React + Vite
+﻿# NIVARAN-AI — Frontend Web Application
+### Chhatrapati Shahu Ji Maharaj University (CSJMU), Kanpur
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 18 Single Page Application (SPA) built with Vite for the **NIVARAN-AI** Grievance Redressal System.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Quick Start
 
-## React Compiler
+### 1. Install Dependencies
+```bash
+npm install
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 2. Configure Environment
+Copy `.env.example` to `.env` or `.env.local`:
+```bash
+cp .env.example .env
+```
+Default configuration:
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
+```
 
-## Expanding the ESLint configuration
+### 3. Run Local Dev Server
+```bash
+npm run dev
+```
+Available at: **`http://localhost:5173`**
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 4. Build for Production
+```bash
+npm run build
+```
+The optimized production bundle will be generated in `dist/`.
+
+---
+
+## 🎨 Design System
+- **Primary / Brand Theme**: CSJMU Crimson (`#5b1021`)
+- **Accent / Highlight**: Gold (`#d4af37`), Slate (`#475569`), Emerald (`#16a34a`)
+- **Typography**: System font stack (`-apple-system`, `Segoe UI`, `Inter`, `Roboto`)
+- **Icons**: Lucide React

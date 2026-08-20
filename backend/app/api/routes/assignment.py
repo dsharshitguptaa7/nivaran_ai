@@ -104,7 +104,8 @@ def assign_grievance(
 
     grievance = db.scalar(
         select(Grievance).where(
-            Grievance.grievance_id == grievance_id
+            (Grievance.grievance_id == grievance_id)
+            | (Grievance.id == (uuid.UUID(grievance_id) if len(grievance_id) == 36 else None))
         )
     )
 
@@ -115,24 +116,7 @@ def assign_grievance(
         )
 
     # --------------------------------------------------
-    # 2. Get assignee
-    # --------------------------------------------------
-
-    assignee = db.scalar(
-        select(User).where(
-            User.id == assignment_data.assigned_to,
-            User.is_active.is_(True),
-        )
-    )
-
-    if assignee is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Assigned user not found or inactive",
-        )
-
-    # --------------------------------------------------
-    # 3. Validate routed assignment target
+    # 2. Resolve target assignee based on authority flow
     # --------------------------------------------------
 
     if current_user.role == UserRole.MANAGER:
@@ -140,57 +124,51 @@ def assign_grievance(
             db=db,
             grievance=grievance,
         )
-
-        if assignee.id != expected_assignee.id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    "Manager can only assign this grievance to "
-                    f"{expected_assignee.full_name}, the Assistant "
-                    "Dean mapped to the grievance subject."
-                ),
-            )
-
     elif current_user.role == UserRole.ASSISTANT_DEAN:
         expected_assignee = get_expected_forward_target(
             db=db,
             grievance=grievance,
         )
-
-        if assignee.id != expected_assignee.id:
+    elif current_user.role == UserRole.ASSOCIATE_DEAN:
+        expected_assignee = db.scalar(
+            select(User).where(
+                User.role == UserRole.DEAN,
+                User.is_active.is_(True),
+            )
+        )
+        if expected_assignee is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    "Assistant Dean can only forward this grievance "
-                    f"to {expected_assignee.full_name}, the authority "
-                    "mapped to the final category."
-                ),
+                detail="Dean authority is not configured or inactive.",
             )
-
     else:
-        NEXT_ROLE = {
-            UserRole.ASSOCIATE_DEAN: UserRole.DEAN,
-        }
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"{current_user.role.value} cannot forward grievances.",
+        )
 
-        expected_role = NEXT_ROLE.get(current_user.role)
-
-        if expected_role is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=(
-                    f"{current_user.role.value} cannot "
-                    "forward grievances to another authority."
-                ),
+    if assignment_data.assigned_to is not None:
+        assignee = db.scalar(
+            select(User).where(
+                User.id == assignment_data.assigned_to,
+                User.is_active.is_(True),
             )
-
-        if assignee.role != expected_role:
+        )
+        if assignee is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Assigned user not found or inactive",
+            )
+        if assignee.id != expected_assignee.id and assignee.role != expected_assignee.role:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=(
-                    f"{current_user.role.value} can only assign "
-                    f"grievances to {expected_role.value}."
+                    f"{current_user.role.value} can only forward to "
+                    f"{expected_assignee.full_name} ({expected_assignee.role.value})."
                 ),
             )
+    else:
+        assignee = expected_assignee
 
     # --------------------------------------------------
     # 4. Check existing active assignment
@@ -291,17 +269,46 @@ def assign_grievance(
 
     db.add(audit_log)
 
-    create_notification(
-    db=db,
-    user_id=assignee.id,
-    grievance_id=grievance.id,
-    notification_type=NotificationType.GRIEVANCE_ASSIGNED,
-    title="New Grievance Assigned",
-    message=(
-        f"Grievance {grievance.grievance_id} "
-        "has been assigned to you."
-    ),
-)
+    if is_forward:
+        role_str = assignee.role.value.replace("_", " ")
+        curr_role_str = current_user.role.value.replace("_", " ")
+
+        # Notify the new assignee
+        create_notification(
+            db=db,
+            user_id=assignee.id,
+            grievance_id=grievance.id,
+            notification_type=NotificationType.GRIEVANCE_FORWARDED,
+            title="Grievance Forwarded to You",
+            message=(
+                f"Grievance {grievance.grievance_id} has been forwarded to you ({assignee.full_name}) by "
+                f"{current_user.full_name} ({curr_role_str})."
+            ),
+        )
+        # Notify the applicant
+        create_notification(
+            db=db,
+            user_id=grievance.applicant_id,
+            grievance_id=grievance.id,
+            notification_type=NotificationType.GRIEVANCE_STATUS_CHANGED,
+            title="Grievance Forwarded",
+            message=(
+                f"Your grievance {grievance.grievance_id} has been forwarded to {assignee.full_name} "
+                f"({role_str}) for further review."
+            ),
+        )
+    else:
+        # Initial assignment
+        create_notification(
+            db=db,
+            user_id=assignee.id,
+            grievance_id=grievance.id,
+            notification_type=NotificationType.GRIEVANCE_ASSIGNED,
+            title="New Grievance Assigned",
+            message=(
+                f"Grievance {grievance.grievance_id} has been assigned to you ({assignee.full_name}) for review."
+            ),
+        )
 
     # --------------------------------------------------
     # 9. Commit

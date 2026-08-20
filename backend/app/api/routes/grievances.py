@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+import uuid
 from uuid import uuid4
 
 from fastapi import (
@@ -21,37 +23,40 @@ from app.models.grievance import (
 from app.models.grievance_status_history import GrievanceStatusHistory
 from app.models.enums import GrievanceStatus
 from app.models.user import User, UserRole
+from app.models.documents import Document
+from app.models.document_request import DocumentRequest
+from app.models.notification import NotificationType
+from app.services.notification_service import create_notification
+from app.services.email_service import (
+    send_grievance_resolved_email,
+    send_grievance_closed_email,
+)
+from app.services.document_request_service import build_document_request_response
 
 from app.schemas.grievance import (
     GrievanceCreate,
     GrievanceResponse,
+    ApplicantSummaryResponse,
+    DocumentResponse,
+    AIReviewRequest,
+    AIReviewDecision,
+    GrievanceResolveRequest,
+    GrievanceCloseRequest,
+    GrievanceReopenRequest,
 )
 from app.schemas.ai_processing import AIProcessingResponse
+from app.schemas.escalation import EscalationRequest
 
 from app.services.grievance_workflow import change_grievance_status
-
-from app.schemas.escalation import EscalationRequest
 from app.services.escalation_service import escalate_grievance
 from app.services.ai_processing import (
     process_grievance,
     run_ai_processing_background,
 )
 
-
-from app.models.grievance import Grievance
-from app.schemas.grievance import (
-    GrievanceCreate,
-    GrievanceResponse,
-    AIReviewRequest,
-    AIReviewDecision,
-)
-
 from app.models.ai_processing import AIProcessingRecord
-
 from app.models.audit_log import AuditLog
-
 from app.models.category import Category
-
 from app.services.authority_routing import get_routing_response
 
 
@@ -63,6 +68,88 @@ router = APIRouter(
 def generate_grievance_id() -> str:
     """Generate a unique human-readable grievance ID."""
     return f"GRV-{uuid4().hex[:10].upper()}"
+
+
+def build_full_grievance_response(
+    db: Session,
+    grievance: Grievance,
+    current_user: User | None = None,
+) -> GrievanceResponse:
+    """Build a rich GrievanceResponse including documents, document requests, resolution/closure details, and routing."""
+    ai_processing = db.scalar(
+        select(AIProcessingRecord)
+        .where(AIProcessingRecord.grievance_id == grievance.id)
+        .order_by(AIProcessingRecord.created_at.desc())
+    )
+
+    documents = db.scalars(
+        select(Document)
+        .where(Document.grievance_id == grievance.id)
+        .order_by(Document.created_at.asc())
+    ).all()
+
+    doc_dtos = [
+        DocumentResponse(
+            id=d.id,
+            grievance_id=d.grievance_id,
+            uploaded_by=d.uploaded_by,
+            uploader_name=d.uploader.full_name if d.uploader else None,
+            file_name=d.file_name,
+            file_path=d.file_path,
+            mime_type=d.mime_type,
+            file_size=d.file_size,
+            document_type=d.document_type or "ATTACHMENT",
+            created_at=d.created_at,
+        )
+        for d in documents
+    ]
+
+    doc_requests = db.scalars(
+        select(DocumentRequest)
+        .where(DocumentRequest.grievance_id == grievance.id)
+        .order_by(DocumentRequest.created_at.desc())
+    ).all()
+
+    response = GrievanceResponse.model_validate(grievance)
+    response.ai_processing = ai_processing
+    response.documents = doc_dtos
+    response.document_requests = [build_document_request_response(dr) for dr in doc_requests]
+    response.resolved_by_name = grievance.resolved_by.full_name if grievance.resolved_by else None
+    response.closed_by_name = grievance.closed_by.full_name if grievance.closed_by else None
+
+    if grievance.applicant:
+        subj_name = None
+        if grievance.subject:
+            subj_name = grievance.subject.name
+        elif grievance.applicant.subject:
+            subj_name = grievance.applicant.subject.name
+
+        response.applicant = ApplicantSummaryResponse(
+            id=grievance.applicant.id,
+            full_name=grievance.applicant.full_name,
+            email=grievance.applicant.email,
+            phd_registration_number=grievance.applicant.phd_registration_number,
+            subject_name=subj_name,
+            department=grievance.applicant.department,
+        )
+        response.subject_name = subj_name
+
+    if current_user is not None:
+        try:
+            routing_data = get_routing_response(
+                db=db,
+                grievance=grievance,
+                current_user=current_user,
+            )
+            response.routing = (
+                GrievanceRoutingResponse.model_validate(routing_data)
+                if routing_data
+                else None
+            )
+        except Exception:
+            response.routing = None
+
+    return response
 
 
 # ============================================================
@@ -106,6 +193,16 @@ def create_grievance(
 
     db.add(history)
 
+    # Notify applicant
+    create_notification(
+        db=db,
+        user_id=current_user.id,
+        notification_type=NotificationType.GRIEVANCE_SUBMITTED,
+        title="Grievance Submitted",
+        message=f"Your grievance {grievance.grievance_id} has been successfully submitted and is being processed.",
+        grievance_id=grievance.id,
+    )
+
     db.commit()
     db.refresh(grievance)
 
@@ -147,7 +244,7 @@ def get_my_grievances(
         )
     ).all()
 
-    return grievances
+    return [build_full_grievance_response(db, g, current_user) for g in grievances]
 
 
 # ============================================================
@@ -178,7 +275,7 @@ def get_all_grievances(
         )
     ).all()
 
-    return grievances
+    return [build_full_grievance_response(db, g, current_user) for g in grievances]
 
 
 # ============================================================
@@ -198,7 +295,8 @@ def get_grievance(
 ):
     grievance = db.scalar(
         select(Grievance).where(
-            Grievance.grievance_id == grievance_id
+            (Grievance.grievance_id == grievance_id)
+            | (Grievance.id == (uuid.UUID(grievance_id) if len(grievance_id) == 36 else None))
         )
     )
 
@@ -218,33 +316,7 @@ def get_grievance(
             detail="Grievance not found",
         )
 
-    # --------------------------------------------------
-    # Latest AI processing record
-    # --------------------------------------------------
-
-    ai_processing = db.scalar(
-        select(AIProcessingRecord)
-        .where(
-            AIProcessingRecord.grievance_id == grievance.id
-        )
-        .order_by(
-            AIProcessingRecord.created_at.desc()
-        )
-    )
-
-    response = GrievanceResponse.model_validate(
-        grievance
-    )
-
-    response.ai_processing = ai_processing
-
-    response.routing = get_routing_response(
-    db=db,
-    grievance=grievance,
-    current_user=current_user,
-    )
-
-    return response
+    return build_full_grievance_response(db, grievance, current_user)
 
 
 # ============================================================
@@ -263,7 +335,8 @@ def get_grievance_history(
 ):
     grievance = db.scalar(
         select(Grievance).where(
-            Grievance.grievance_id == grievance_id
+            (Grievance.grievance_id == grievance_id)
+            | (Grievance.id == (uuid.UUID(grievance_id) if len(grievance_id) == 36 else None))
         )
     )
 
@@ -431,7 +504,8 @@ def review_ai_recommendation(
 
     grievance = db.scalar(
         select(Grievance).where(
-            Grievance.grievance_id == grievance_id
+            (Grievance.grievance_id == grievance_id)
+            | (Grievance.id == (uuid.UUID(grievance_id) if len(grievance_id) == 36 else None))
         )
     )
 
@@ -483,13 +557,16 @@ def review_ai_recommendation(
         )
 
     # --------------------------------------------------
-    # 4. Prevent duplicate review
+    # 4. Handle review status
     # --------------------------------------------------
 
-    if grievance.category_reviewed:
+    if grievance.category_reviewed and grievance.status not in {
+        GrievanceStatus.PENDING_REVIEW,
+        GrievanceStatus.ASSIGNED,
+    }:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="AI category has already been reviewed",
+            detail="AI category cannot be reviewed in current status",
         )
 
     # --------------------------------------------------
@@ -615,19 +692,8 @@ def review_ai_recommendation(
     # 10. Build response
     # --------------------------------------------------
 
-    response = GrievanceResponse.model_validate(
-        grievance
-    )
+    return build_full_grievance_response(db, grievance, current_user)
 
-    response.ai_processing = ai_processing
-
-    response.routing = get_routing_response(
-    db=db,
-    grievance=grievance,
-    current_user=current_user,
-    )
-
-    return response
 
 # ============================================================
 # ESCALATE GRIEVANCE
@@ -649,7 +715,8 @@ def escalate_grievance_api(
 ):
     grievance = db.scalar(
         select(Grievance).where(
-            Grievance.grievance_id == grievance_id
+            (Grievance.grievance_id == grievance_id)
+            | (Grievance.id == (uuid.UUID(grievance_id) if len(grievance_id) == 36 else None))
         )
     )
 
@@ -670,13 +737,342 @@ def escalate_grievance_api(
     db.commit()
     db.refresh(grievance)
 
-    response = GrievanceResponse.model_validate(
-    grievance
+    return build_full_grievance_response(db, grievance, current_user)
+
+
+# ============================================================
+# RESOLVE GRIEVANCE (At any authority level)
+# ============================================================
+
+@router.post(
+    "/{grievance_id}/resolve",
+    response_model=GrievanceResponse,
+)
+def resolve_grievance_api(
+    grievance_id: str,
+    resolve_data: GrievanceResolveRequest,
+    current_user: User = Depends(
+        require_permission(
+            Permission.RESOLVE_GRIEVANCE
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    grievance = db.scalar(
+        select(Grievance).where(
+            (Grievance.grievance_id == grievance_id)
+            | (Grievance.id == (uuid.UUID(grievance_id) if len(grievance_id) == 36 else None))
+        )
     )
 
-    response.routing = get_routing_response(
-    db=db,
-    grievance=grievance,
+    if grievance is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Grievance not found",
+        )
+
+    solvable_statuses = {
+        GrievanceStatus.ASSIGNED,
+        GrievanceStatus.IN_PROGRESS,
+        GrievanceStatus.ESCALATED,
+        GrievanceStatus.PENDING_REVIEW,
+        GrievanceStatus.AWAITING_INFORMATION,
+        GrievanceStatus.REOPENED,
+    }
+
+    if grievance.status not in solvable_statuses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Grievance cannot be resolved from status: {grievance.status.value}",
+        )
+
+    previous_status = grievance.status
+
+    change_grievance_status(
+        db=db,
+        grievance=grievance,
+        new_status=GrievanceStatus.RESOLVED,
+        changed_by=current_user,
+        reason=f"Resolved by {current_user.full_name}: {resolve_data.resolution_notes}",
     )
 
-    return grievance
+    grievance.resolution_notes = resolve_data.resolution_notes
+    grievance.resolved_by_id = current_user.id
+    grievance.resolved_at = datetime.now(timezone.utc)
+    db.add(grievance)
+
+    # Audit log
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        grievance_id=grievance.id,
+        action="GRIEVANCE_RESOLVED",
+        entity_type="GRIEVANCE",
+        entity_id=grievance.id,
+        description=(
+            f"Grievance {grievance.grievance_id} resolved by {current_user.full_name} "
+            f"({current_user.role.value}). Resolution: {resolve_data.resolution_notes}"
+        ),
+    )
+    db.add(audit_log)
+
+    # Notify applicant (In-App)
+    create_notification(
+        db=db,
+        user_id=grievance.applicant_id,
+        notification_type=NotificationType.GRIEVANCE_RESOLVED,
+        title="Grievance Resolved",
+        message=(
+            f"Your grievance {grievance.grievance_id} has been resolved by "
+            f"{current_user.full_name}. Resolution: {resolve_data.resolution_notes}"
+        ),
+        grievance_id=grievance.id,
+    )
+
+    # Send applicant email notification if status transitioned to RESOLVED
+    if previous_status != GrievanceStatus.RESOLVED and grievance.status == GrievanceStatus.RESOLVED:
+        try:
+            applicant_user = db.scalar(select(User).where(User.id == grievance.applicant_id))
+            if applicant_user and applicant_user.email:
+                send_grievance_resolved_email(
+                    applicant_email=applicant_user.email,
+                    applicant_name=applicant_user.full_name,
+                    grievance_id=grievance.grievance_id,
+                    grievance_title=grievance.title,
+                    resolution_notes=resolve_data.resolution_notes,
+                )
+        except Exception as email_err:
+            print(f"[GRIEVANCE_RESOLVED_EMAIL_ERROR]: {email_err}")
+
+    # Notify all active managers about the resolved grievance for closure review
+    managers = db.scalars(
+        select(User).where(
+            User.role == UserRole.MANAGER,
+            User.is_active.is_(True),
+        )
+    ).all()
+
+    for mgr in managers:
+        create_notification(
+            db=db,
+            user_id=mgr.id,
+            notification_type=NotificationType.GRIEVANCE_RESOLVED,
+            title="Grievance Resolved - Awaiting Closure Review",
+            message=(
+                f"Grievance {grievance.grievance_id} was solved by {current_user.full_name} "
+                f"({current_user.role.value}). Please review and perform final closure."
+            ),
+            grievance_id=grievance.id,
+        )
+
+    db.commit()
+    db.refresh(grievance)
+
+    return build_full_grievance_response(db, grievance, current_user)
+
+
+# ============================================================
+# CLOSE GRIEVANCE (Manager Authority)
+# ============================================================
+
+@router.post(
+    "/{grievance_id}/close",
+    response_model=GrievanceResponse,
+)
+def close_grievance_api(
+    grievance_id: str,
+    close_data: GrievanceCloseRequest,
+    current_user: User = Depends(
+        require_permission(
+            Permission.CLOSE_GRIEVANCE
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    grievance = db.scalar(
+        select(Grievance).where(
+            (Grievance.grievance_id == grievance_id)
+            | (Grievance.id == (uuid.UUID(grievance_id) if len(grievance_id) == 36 else None))
+        )
+    )
+
+    if grievance is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Grievance not found",
+        )
+
+    allowed_close_statuses = {
+        GrievanceStatus.RESOLVED,
+        GrievanceStatus.PENDING_REVIEW,
+        GrievanceStatus.IN_PROGRESS,
+        GrievanceStatus.ASSIGNED,
+    }
+
+    if grievance.status not in allowed_close_statuses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Grievance cannot be closed from status: {grievance.status.value}",
+        )
+
+    remarks = close_data.closure_remarks or "Resolution verified and grievance closed by Manager."
+
+    previous_status = grievance.status
+
+    change_grievance_status(
+        db=db,
+        grievance=grievance,
+        new_status=GrievanceStatus.CLOSED,
+        changed_by=current_user,
+        reason=f"Closed by {current_user.full_name}: {remarks}",
+    )
+
+    grievance.closure_remarks = remarks
+    grievance.closed_by_id = current_user.id
+    grievance.closed_at = datetime.now(timezone.utc)
+    db.add(grievance)
+
+    # Audit log
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        grievance_id=grievance.id,
+        action="GRIEVANCE_CLOSED",
+        entity_type="GRIEVANCE",
+        entity_id=grievance.id,
+        description=(
+            f"Grievance {grievance.grievance_id} closed by {current_user.full_name} "
+            f"({current_user.role.value}). Remarks: {remarks}"
+        ),
+    )
+    db.add(audit_log)
+
+    # Notify applicant (In-App)
+    create_notification(
+        db=db,
+        user_id=grievance.applicant_id,
+        notification_type=NotificationType.GRIEVANCE_CLOSED,
+        title="Grievance Closed",
+        message=(
+            f"Your grievance {grievance.grievance_id} has been formally closed by "
+            f"{current_user.full_name} ({current_user.role.value}). Remarks: {remarks}"
+        ),
+        grievance_id=grievance.id,
+    )
+
+    # Send applicant email notification if status transitioned to CLOSED
+    if previous_status != GrievanceStatus.CLOSED and grievance.status == GrievanceStatus.CLOSED:
+        try:
+            applicant_user = db.scalar(select(User).where(User.id == grievance.applicant_id))
+            if applicant_user and applicant_user.email:
+                send_grievance_closed_email(
+                    applicant_email=applicant_user.email,
+                    applicant_name=applicant_user.full_name,
+                    grievance_id=grievance.grievance_id,
+                    grievance_title=grievance.title,
+                    closure_remarks=remarks,
+                )
+        except Exception as email_err:
+            print(f"[GRIEVANCE_CLOSED_EMAIL_ERROR]: {email_err}")
+
+    db.commit()
+    db.refresh(grievance)
+
+    return build_full_grievance_response(db, grievance, current_user)
+
+
+# ============================================================
+# REOPEN GRIEVANCE (Manager or Applicant)
+# ============================================================
+
+@router.post(
+    "/{grievance_id}/reopen",
+    response_model=GrievanceResponse,
+)
+def reopen_grievance_api(
+    grievance_id: str,
+    reopen_data: GrievanceReopenRequest,
+    current_user: User = Depends(
+        require_permission(
+            Permission.REOPEN_GRIEVANCE
+        )
+    ),
+    db: Session = Depends(get_db),
+):
+    grievance = db.scalar(
+        select(Grievance).where(
+            (Grievance.grievance_id == grievance_id)
+            | (Grievance.id == (uuid.UUID(grievance_id) if len(grievance_id) == 36 else None))
+        )
+    )
+
+    if grievance is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Grievance not found",
+        )
+
+    if current_user.role == UserRole.APPLICANT and grievance.applicant_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this grievance",
+        )
+
+    reopenable_statuses = {
+        GrievanceStatus.RESOLVED,
+        GrievanceStatus.CLOSED,
+    }
+
+    if grievance.status not in reopenable_statuses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Grievance in status '{grievance.status.value}' cannot be reopened",
+        )
+
+    change_grievance_status(
+        db=db,
+        grievance=grievance,
+        new_status=GrievanceStatus.REOPENED,
+        changed_by=current_user,
+        reason=f"Reopened by {current_user.full_name}: {reopen_data.reason}",
+    )
+
+    db.add(grievance)
+
+    # Audit log
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        grievance_id=grievance.id,
+        action="GRIEVANCE_REOPENED",
+        entity_type="GRIEVANCE",
+        entity_id=grievance.id,
+        description=(
+            f"Grievance {grievance.grievance_id} reopened by {current_user.full_name} "
+            f"({current_user.role.value}). Reason: {reopen_data.reason}"
+        ),
+    )
+    db.add(audit_log)
+
+    # Notify managers
+    managers = db.scalars(
+        select(User).where(
+            User.role == UserRole.MANAGER,
+            User.is_active.is_(True),
+        )
+    ).all()
+
+    for mgr in managers:
+        create_notification(
+            db=db,
+            user_id=mgr.id,
+            notification_type=NotificationType.SYSTEM,
+            title="Grievance Reopened",
+            message=(
+                f"Grievance {grievance.grievance_id} has been reopened by {current_user.full_name}. "
+                f"Reason: {reopen_data.reason}"
+            ),
+            grievance_id=grievance.id,
+        )
+
+    db.commit()
+    db.refresh(grievance)
+
+    return build_full_grievance_response(db, grievance, current_user)

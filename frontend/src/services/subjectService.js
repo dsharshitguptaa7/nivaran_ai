@@ -1,6 +1,5 @@
-import api from "./api";
+import { apiRequest } from "./api";
 
-export const getSubjects = async () => {
-  const response = await api.get("/subjects");
-  return response.data;
-};
+export async function getSubjects() {
+  return apiRequest("/subjects");
+}

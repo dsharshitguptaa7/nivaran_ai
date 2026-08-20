@@ -57,7 +57,7 @@ function Landing() {
             </Link>
 
             <Link
-              to="/authority/login"
+              to="/login?type=authority"
               className="authority-link"
             >
               Authority Login

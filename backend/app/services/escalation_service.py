@@ -192,6 +192,7 @@ def escalate_grievance(
 
     allowed_statuses = {
         GrievanceStatus.ASSIGNED,
+        GrievanceStatus.IN_PROGRESS,
         GrievanceStatus.ESCALATED,
     }
 
@@ -304,17 +305,17 @@ def escalate_grievance(
     # --------------------------------------------------------
 
     create_notification(
-    db=db,
-    user_id=next_authority.id,
-    grievance_id=grievance.id,
-    notification_type=NotificationType.GRIEVANCE_ESCALATED,
-    title="Grievance Escalated",
-    message=(
-        f"Grievance {grievance.grievance_id} "
-        f"has been escalated to you by "
-        f"{current_user.full_name}."
-    ),
-)
+        db=db,
+        user_id=next_authority.id,
+        grievance_id=grievance.id,
+        notification_type=NotificationType.GRIEVANCE_ESCALATED,
+        title="Grievance Escalated",
+        message=(
+            f"Grievance {grievance.grievance_id} has been escalated to you "
+            f"({next_authority.full_name} - {next_authority.role.value.replace('_', ' ')}) by "
+            f"{current_user.full_name} ({current_user.role.value.replace('_', ' ')})."
+        ),
+    )
 
     # --------------------------------------------------------
     # 7. Update status ONLY if necessary

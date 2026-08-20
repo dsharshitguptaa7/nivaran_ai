@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Grievance Has Been Closed</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8fafc;
+      margin: 0;
+      padding: 0;
+      color: #334155;
+    }
+    .wrapper {
+      max-width: 600px;
+      margin: 24px auto;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .header {
+      background: linear-gradient(135deg, #5b1021 0%, #3b0714 100%);
+      padding: 28px 24px;
+      text-align: center;
+      color: #ffffff;
+    }
+    .header h1 {
+      margin: 0 0 4px 0;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .header h1 span {
+      color: #d4af37;
+    }
+    .header p {
+      margin: 0;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+      letter-spacing: 0.2px;
+    }
+    .body-content {
+      padding: 28px 24px;
+    }
+    .greeting {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 12px;
+    }
+    .intro {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #475569;
+      margin-bottom: 20px;
+    }
+    .details-box {
+      background: #f8fafc;
+      border-left: 4px solid #475569;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      border-top: 1px solid #e2e8f0;
+      border-right: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .detail-row {
+      margin-bottom: 12px;
+    }
+    .detail-row:last-child {
+      margin-bottom: 0;
+    }
+    .detail-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .detail-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-top: 2px;
+    }
+    .detail-value.tracking-id {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #475569;
+      background: #ffffff;
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+    }
+    .btn-container {
+      text-align: center;
+      margin: 28px 0;
+    }
+    .btn {
+      display: inline-block;
+      background: #475569;
+      color: #ffffff !important;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px 28px;
+      border-radius: 8px;
+    }
+    .footer {
+      background: #f8fafc;
+      padding: 18px 24px;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>NIVARAN<span>.AI</span></h1>
+      <p>AI-Assisted Grievance Redressal System</p>
+    </div>
+    <div class="body-content">
+      <div class="greeting">Dear {{ applicant_name }},</div>
+      <p class="intro">
+        Your grievance has completed the formal administrative review process and has been marked as <strong>CLOSED</strong>.
+      </p>
+      <div class="details-box">
+        <div class="detail-row">
+          <div class="detail-label">Grievance ID</div>
+          <div class="detail-value tracking-id">{{ grievance_id }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Grievance Title</div>
+          <div class="detail-value">{{ grievance_title }}</div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-label">Final Status</div>
+          <div class="detail-value" style="color: #475569;">CLOSED</div>
+        </div>
+        {{ closure_remarks_section }}
+      </div>
+      <p class="intro">
+        You can log in to your dashboard at any time to view the complete history and audit trail of this grievance.
+      </p>
+      <div class="btn-container">
+        <a href="{{ action_url }}" class="btn" target="_blank">View Grievance History &rarr;</a>
+      </div>
+    </div>
+    <div class="footer">
+      This is an automated notification from <strong>NIVARAN-AI</strong>.<br>
+      Please do not reply directly to this email.
+    </div>
+  </div>
+</body>
+</html>

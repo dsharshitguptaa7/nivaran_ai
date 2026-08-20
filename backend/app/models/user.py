@@ -55,11 +55,18 @@ class User(Base):
         nullable=True
     )
 
+    phd_registration_number: Mapped[str | None] = mapped_column(
+        String(100),
+        unique=True,
+        nullable=True,
+        index=True
+    )
+
     subject_id: Mapped[uuid.UUID | None] = mapped_column(
-    UUID(as_uuid=True),
-    ForeignKey("subjects.id"),
-    nullable=True,
-    index=True,
+        UUID(as_uuid=True),
+        ForeignKey("subjects.id"),
+        nullable=True,
+        index=True,
     )
 
     is_active: Mapped[bool] = mapped_column(

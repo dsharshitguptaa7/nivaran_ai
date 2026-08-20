@@ -51,6 +51,7 @@ ROLE_PERMISSIONS: dict[UserRole, set[Permission]] = {
     UserRole.APPLICANT: {
         Permission.CREATE_GRIEVANCE,
         Permission.VIEW_GRIEVANCE,
+        Permission.REOPEN_GRIEVANCE,
         Permission.UPLOAD_DOCUMENT,
         Permission.VIEW_DOCUMENT,
         Permission.DOWNLOAD_DOCUMENT,
@@ -62,6 +63,9 @@ ROLE_PERMISSIONS: dict[UserRole, set[Permission]] = {
     UserRole.MANAGER: {
         Permission.VIEW_GRIEVANCE,
         Permission.UPDATE_GRIEVANCE,
+        Permission.RESOLVE_GRIEVANCE,
+        Permission.CLOSE_GRIEVANCE,
+        Permission.REOPEN_GRIEVANCE,
         Permission.ASSIGN_GRIEVANCE,
         Permission.REASSIGN_GRIEVANCE,
         Permission.VIEW_ASSIGNMENTS,
@@ -82,6 +86,7 @@ ROLE_PERMISSIONS: dict[UserRole, set[Permission]] = {
     UserRole.ASSISTANT_DEAN: {
         Permission.VIEW_GRIEVANCE,
         Permission.UPDATE_GRIEVANCE,
+        Permission.RESOLVE_GRIEVANCE,
         Permission.ASSIGN_GRIEVANCE,
         Permission.REASSIGN_GRIEVANCE,
         Permission.VIEW_ASSIGNMENTS,

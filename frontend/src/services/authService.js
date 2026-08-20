@@ -1,4 +1,4 @@
-import { apiRequest } from "./api";
+import { apiRequest, API_BASE_URL } from "./api";
 
 export async function registerUser(userData) {
   return apiRequest("/auth/register", {
@@ -19,7 +19,7 @@ export async function loginUser(email, password) {
   formData.append("password", password);
 
   const response = await fetch(
-    "http://127.0.0.1:8000/api/v1/auth/login",
+    `${API_BASE_URL}/auth/login`,
     {
       method: "POST",
 

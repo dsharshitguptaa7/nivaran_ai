@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
+from app.models.enums import GrievanceStatus
 from app.models.grievance import Grievance
 from app.models.notification import Notification, NotificationType
 from app.services.notification_service import create_notification
@@ -20,6 +21,7 @@ def find_overdue_grievances(
     """
     Find grievances where:
     - there is an active assignment
+    - grievance is not resolved or closed
     - no meaningful action has happened for 3 or more days
     """
 
@@ -36,6 +38,7 @@ def find_overdue_grievances(
         )
         .where(
             Assignment.is_active.is_(True),
+            Grievance.status.not_in([GrievanceStatus.RESOLVED, GrievanceStatus.CLOSED]),
             Grievance.last_action_at <= cutoff_time,
         )
     ).all()
@@ -116,23 +119,23 @@ def create_overdue_reminders(
                     f"Action Required - "
                     f"Grievance {grievance.grievance_id}"
                 ),
-                body=(
+                html_content=(
+                    f"Dear {authority.full_name},<br><br>"
+                    f"No meaningful action has been recorded for grievance <strong>{grievance.grievance_id}</strong> for {REMINDER_AFTER_DAYS} days.<br><br>"
+                    f"<b>Grievance Title:</b> {grievance.title}<br>"
+                    f"<b>Priority:</b> {grievance.priority.value}<br>"
+                    f"<b>Current Status:</b> {grievance.status.value}<br><br>"
+                    "Please review the grievance and take the necessary action.<br><br>"
+                    "Regards,<br>NIVARAN-AI Grievance Redressal System"
+                ),
+                text_content=(
                     f"Dear {authority.full_name},\n\n"
-
-                    f"No meaningful action has been recorded "
-                    f"for grievance {grievance.grievance_id} "
-                    f"for {REMINDER_AFTER_DAYS} days.\n\n"
-
+                    f"No meaningful action has been recorded for grievance {grievance.grievance_id} for {REMINDER_AFTER_DAYS} days.\n\n"
                     f"Grievance Title: {grievance.title}\n"
                     f"Priority: {grievance.priority.value}\n"
                     f"Current Status: {grievance.status.value}\n\n"
-
-                    "Please review the grievance and take the "
-                    "necessary action.\n\n"
-
-                    "Regards,\n"
-                    "NIVARAN-AI\n"
-                    "AI-Assisted Grievance Redressal System"
+                    "Please review the grievance and take the necessary action.\n\n"
+                    "Regards,\nNIVARAN-AI Grievance Redressal System"
                 ),
             )
 

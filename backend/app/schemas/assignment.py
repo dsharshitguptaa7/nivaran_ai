@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class AssignmentCreate(BaseModel):
-    assigned_to: UUID
+    assigned_to: UUID | None = None
 
     remarks: str | None = Field(
         default=None,

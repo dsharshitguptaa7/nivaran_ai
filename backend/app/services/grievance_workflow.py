@@ -19,33 +19,44 @@ ALLOWED_TRANSITIONS: dict[GrievanceStatus, set[GrievanceStatus]] = {
     GrievanceStatus.PENDING_REVIEW: {
         GrievanceStatus.ASSIGNED,
         GrievanceStatus.IN_PROGRESS,
+        GrievanceStatus.AWAITING_INFORMATION,
+        GrievanceStatus.RESOLVED,
         GrievanceStatus.ESCALATED,
     },
 
     GrievanceStatus.ASSIGNED: {
         GrievanceStatus.IN_PROGRESS,
+        GrievanceStatus.AWAITING_INFORMATION,
+        GrievanceStatus.RESOLVED,
         GrievanceStatus.ESCALATED,
     },
 
     GrievanceStatus.IN_PROGRESS: {
+        GrievanceStatus.ASSIGNED,
         GrievanceStatus.AWAITING_INFORMATION,
         GrievanceStatus.RESOLVED,
         GrievanceStatus.ESCALATED,
     },
 
     GrievanceStatus.AWAITING_INFORMATION: {
+        GrievanceStatus.ASSIGNED,
         GrievanceStatus.IN_PROGRESS,
+        GrievanceStatus.ESCALATED,
+        GrievanceStatus.PENDING_REVIEW,
+        GrievanceStatus.RESOLVED,
     },
 
     GrievanceStatus.ESCALATED: {
         GrievanceStatus.ASSIGNED,
         GrievanceStatus.IN_PROGRESS,
+        GrievanceStatus.AWAITING_INFORMATION,
         GrievanceStatus.RESOLVED,
     },
 
     GrievanceStatus.RESOLVED: {
         GrievanceStatus.CLOSED,
         GrievanceStatus.REOPENED,
+        GrievanceStatus.IN_PROGRESS,
     },
 
     GrievanceStatus.CLOSED: {
@@ -53,6 +64,8 @@ ALLOWED_TRANSITIONS: dict[GrievanceStatus, set[GrievanceStatus]] = {
     },
 
     GrievanceStatus.REOPENED: {
+        GrievanceStatus.PENDING_REVIEW,
+        GrievanceStatus.ASSIGNED,
         GrievanceStatus.IN_PROGRESS,
         GrievanceStatus.ESCALATED,
     },

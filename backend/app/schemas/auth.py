@@ -8,6 +8,7 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     department: str | None = None
+    phd_registration_number: str | None = None
 
     # Applicant's research/academic subject
     subject_id: UUID
@@ -19,6 +20,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     role: str
     department: str | None
+    phd_registration_number: str | None = None
     subject_id: UUID | None = None
     is_active: bool
 

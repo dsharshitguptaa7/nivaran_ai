@@ -1,25 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import {
-  getCurrentUser,
-  logoutUser,
-} from "../services/authService";
+import { getCurrentUser, logoutUser } from "../services/authService";
+import { getMyGrievances } from "../services/grievanceService";
 
-import {
-  getMyGrievances,
-} from "../services/grievanceService";
+import AuthorityHeader from "../components/AuthorityHeader";
+import AuthoritySidebar from "../components/AuthoritySidebar";
+import LiveDateTime from "../components/LiveDateTime";
+import StatusBadge from "../components/StatusBadge";
+import PriorityBadge from "../components/PriorityBadge";
+import EmptyState from "../components/EmptyState";
+import LoadingState from "../components/LoadingState";
+import ErrorState from "../components/ErrorState";
 
 
 function MyGrievances() {
-
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
-
   const [grievances, setGrievances] = useState([]);
-  const [filteredGrievances, setFilteredGrievances] =
-    useState([]);
+  const [filteredGrievances, setFilteredGrievances] = useState([]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -28,803 +28,285 @@ function MyGrievances() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-
-  /* =====================================================
-     LOAD USER + GRIEVANCES
-  ====================================================== */
-
+  // =====================================================
+  // LOAD USER + GRIEVANCES
+  // =====================================================
   useEffect(() => {
     loadPage();
   }, []);
 
-
   const loadPage = async () => {
-
     try {
-
       setLoading(true);
       setError("");
 
-      const [
-        currentUser,
-        myGrievances,
-      ] = await Promise.all([
+      const [currentUser, myGrievances] = await Promise.all([
         getCurrentUser(),
         getMyGrievances(),
       ]);
 
       setUser(currentUser);
-      setGrievances(myGrievances);
-
+      setGrievances(Array.isArray(myGrievances) ? myGrievances : []);
     } catch (err) {
-
-      console.error(
-        "My grievances loading error:",
-        err
-      );
-
+      console.error("My grievances loading error:", err);
       if (
-        err.message
-          ?.toLowerCase()
-          .includes("401") ||
-        err.message
-          ?.toLowerCase()
-          .includes("unauthorized")
+        err.message?.toLowerCase().includes("401") ||
+        err.message?.toLowerCase().includes("unauthorized")
       ) {
-
         logoutUser();
         navigate("/login");
-
         return;
       }
-
-      setError(
-        err.message ||
-        "Unable to load grievances."
-      );
-
+      setError(err.message || "Unable to load grievances.");
     } finally {
-
       setLoading(false);
-
     }
   };
 
-
-  /* =====================================================
-     FILTER
-  ====================================================== */
-
+  // =====================================================
+  // FILTER
+  // =====================================================
   useEffect(() => {
-
-    filterGrievances();
-
-  }, [
-    grievances,
-    search,
-    statusFilter,
-    priorityFilter,
-  ]);
-
-
-  const filterGrievances = () => {
-
     let result = [...grievances];
 
-
-    /* SEARCH */
-
     if (search.trim()) {
-
-      const query =
-        search.toLowerCase();
-
+      const q = search.toLowerCase();
       result = result.filter(
-        (grievance) =>
-          grievance.grievance_id
-            ?.toLowerCase()
-            .includes(query) ||
-
-          grievance.title
-            ?.toLowerCase()
-            .includes(query) ||
-
-          grievance.description
-            ?.toLowerCase()
-            .includes(query)
+        (g) =>
+          g.title?.toLowerCase().includes(q) ||
+          g.description?.toLowerCase().includes(q) ||
+          g.grievance_id?.toLowerCase().includes(q)
       );
-
     }
-
-
-    /* STATUS */
 
     if (statusFilter !== "ALL") {
-
-      result = result.filter(
-        (grievance) =>
-          grievance.status === statusFilter
-      );
-
+      result = result.filter((g) => g.status === statusFilter);
     }
-
-
-    /* PRIORITY */
 
     if (priorityFilter !== "ALL") {
-
-      result = result.filter(
-        (grievance) =>
-          grievance.priority === priorityFilter
-      );
-
+      result = result.filter((g) => g.priority === priorityFilter);
     }
-
 
     setFilteredGrievances(result);
-
-  };
-
-
-  /* =====================================================
-     FORMATTERS
-  ====================================================== */
-
-  const formatStatus = (status) => {
-
-    if (!status) {
-      return "-";
-    }
-
-    return status.replaceAll(
-      "_",
-      " "
-    );
-
-  };
-
+  }, [search, statusFilter, priorityFilter, grievances]);
 
   const formatDate = (date) => {
-
-    if (!date) {
-      return "-";
-    }
-
-    return new Date(
-      date
-    ).toLocaleDateString(
-      "en-IN",
-      {
+    if (!date) return "-";
+    try {
+      return new Date(date).toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "short",
         year: "numeric",
-      }
-    );
-
-  };
-
-
-  const getCategory = (grievance) => {
-
-    if (!grievance.category_id) {
-      return "AI Processing";
+      });
+    } catch {
+      return String(date);
     }
-
-    return "Classified";
-
   };
 
-
-  /* =====================================================
-     LOGOUT
-  ====================================================== */
+  function getCategoryName(g) {
+    if (!g) return "General";
+    if (g.final_category && typeof g.final_category === "object") return g.final_category.name || "General";
+    if (g.category && typeof g.category === "object") return g.category.name || "General";
+    if (typeof g.category === "string") return g.category;
+    return "General";
+  }
 
   const handleLogout = () => {
-
     logoutUser();
     navigate("/login");
-
   };
 
-
-  /* =====================================================
-     USER DATA
-  ====================================================== */
-
-  const userName =
-    user?.full_name || "Applicant";
-
-  const userRole =
-    user?.role
-      ? user.role.replaceAll(
-          "_",
-          " "
-        )
-      : "Applicant";
-
-  const userInitial =
-    userName
-      .charAt(0)
-      .toUpperCase();
-
-
-  /* =====================================================
-     RENDER
-  ====================================================== */
+  const navItems = [
+    { label: "Dashboard", path: "/dashboard", icon: "⌂" },
+    { label: "Submit Grievance", path: "/dashboard/submit", icon: "✎" },
+    { label: "My Grievances", path: "/dashboard/grievances", icon: "≡", count: grievances.length, active: true },
+  ];
 
   return (
+    <div className="authority-page">
+      {/* GLOBAL HEADER */}
+      <AuthorityHeader
+        userName={user?.full_name || user?.name || "Student / Applicant"}
+        userRole={user?.role || "APPLICANT"}
+        portalHome="/dashboard"
+        onLogout={handleLogout}
+      />
 
-    <div className="applicant-page">
+      <div className="authority-body">
+        {/* GLOBAL SIDEBAR */}
+        <AuthoritySidebar
+          portalLabel="STUDENT / APPLICANT PORTAL"
+          navItems={navItems}
+          userName={user?.full_name || user?.name || "Applicant"}
+          userRole={user?.role || "APPLICANT"}
+          onLogout={handleLogout}
+        />
 
-
-      {/* =================================================
-          SAME HEADER AS DASHBOARD
-      ================================================= */}
-
-      <header className="applicant-header">
-
-        <Link
-          to="/dashboard"
-          className="applicant-brand"
-        >
-
-          <div className="applicant-brand-mark">
-            N
-          </div>
-
-          <div className="applicant-brand-text">
-
-            <strong>
-              NIVARAN
-            </strong>
-
-            <span>
-              Grievance Redressal System
-            </span>
-
-          </div>
-
-        </Link>
-
-
-        <div className="applicant-header-user">
-
-          <div className="applicant-user-info">
-
-            <strong>
-              {userName}
-            </strong>
-
-            <span>
-              {userRole}
-            </span>
-
-          </div>
-
-
-          <div className="applicant-user-avatar">
-            {userInitial}
-          </div>
-
-
-          <button
-            type="button"
-            className="applicant-logout"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-
-        </div>
-
-      </header>
-
-
-      {/* =================================================
-          SAME BODY
-      ================================================= */}
-
-      <div className="applicant-body">
-
-
-        {/* =================================================
-            SAME SIDEBAR
-        ================================================= */}
-
-        <aside className="applicant-sidebar">
-
-          <div className="applicant-sidebar-label">
-            APPLICANT
-          </div>
-
-
-          <nav className="applicant-sidebar-nav">
-
-
-            {/* DASHBOARD */}
-
-            <Link
-              to="/dashboard"
-              className="applicant-nav-item"
-            >
-
-              <span className="applicant-nav-icon">
-                ▦
-              </span>
-
-              <span>
-                Dashboard
-              </span>
-
-            </Link>
-
-
-            {/* MY GRIEVANCES — ACTIVE */}
-
-            <Link
-              to="/dashboard/grievances"
-              className="applicant-nav-item active"
-            >
-
-              <span className="applicant-nav-icon">
-                ≡
-              </span>
-
-              <span>
-                My Grievances
-              </span>
-
-            </Link>
-
-
-            {/* SUBMIT */}
-
-            <Link
-              to="/dashboard/submit"
-              className="applicant-nav-item"
-            >
-
-              <span className="applicant-nav-icon">
-                +
-              </span>
-
-              <span>
-                Submit Grievance
-              </span>
-
-            </Link>
-
-
-          </nav>
-
-        </aside>
-
-
-        {/* =================================================
-            MAIN CONTENT
-        ================================================= */}
-
-        <main className="applicant-main">
-
-
-          {/* =================================================
-              PAGE HEADER
-          ================================================= */}
-
-          <section className="applicant-page-header">
-
+        {/* MAIN CONTENT */}
+        <main className="authority-main">
+          {/* PAGE HEADER */}
+          <section className="authority-page-header">
             <div>
-
-              <div className="applicant-page-eyebrow">
-                SECURE GRIEVANCE MANAGEMENT SYSTEM
-              </div>
-
-              <h1>
-                My Grievances
-              </h1>
-
-              <p>
-                View and track all your
-                submitted grievances.
-              </p>
-
+              <div className="authority-page-eyebrow">STUDENT PORTAL • MY SUBMISSIONS</div>
+              <h1>My Grievances</h1>
+              <p>Track live redressal status, review assigned officer feedback, and view official resolutions.</p>
             </div>
 
-
-            <Link
-              to="/dashboard/submit"
-              className="applicant-primary-button"
-            >
-              + Submit Grievance
-            </Link>
-
+            <div className="authority-header-actions">
+              <LiveDateTime format="full" />
+              <Link to="/dashboard/submit" className="authority-primary-button">
+                + Submit New Grievance
+              </Link>
+            </div>
           </section>
 
-
-          {/* =================================================
-              SEARCH + FILTER
-          ================================================= */}
-
-          <section className="applicant-filter-card">
-
-
-            <div className="applicant-filter-search">
-
-              <span className="applicant-filter-search-icon">
-                ⌕
-              </span>
-
-              <input
-                type="text"
-                placeholder="Search by grievance ID or title..."
-                value={search}
-                onChange={(e) =>
-                  setSearch(e.target.value)
-                }
-              />
-
-            </div>
-
-
-            <div className="applicant-filter-select">
-
-              <label>
-                Status
-              </label>
-
-              <select
-                value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(
-                    e.target.value
-                  )
-                }
-              >
-
-                <option value="ALL">
-                  All Status
-                </option>
-
-                <option value="SUBMITTED">
-                  Submitted
-                </option>
-
-                <option value="AI_PROCESSING">
-                  AI Processing
-                </option>
-
-                <option value="PENDING_REVIEW">
-                  Pending Review
-                </option>
-
-                <option value="IN_PROGRESS">
-                  In Progress
-                </option>
-
-                <option value="RESOLVED">
-                  Resolved
-                </option>
-
-                <option value="CLOSED">
-                  Closed
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div className="applicant-filter-select">
-
-              <label>
-                Priority
-              </label>
-
-              <select
-                value={priorityFilter}
-                onChange={(e) =>
-                  setPriorityFilter(
-                    e.target.value
-                  )
-                }
-              >
-
-                <option value="ALL">
-                  All Priority
-                </option>
-
-                <option value="LOW">
-                  Low
-                </option>
-
-                <option value="MEDIUM">
-                  Medium
-                </option>
-
-                <option value="HIGH">
-                  High
-                </option>
-
-              </select>
-
-            </div>
-
-          </section>
-
-
-          {/* =================================================
-              LOADING
-          ================================================= */}
-
-          {loading && (
-
-            <div className="applicant-state-card">
-
-              <div className="applicant-state-icon">
-                AI
-              </div>
-
-              <h3>
-                Loading grievances
-              </h3>
-
-              <p>
-                Please wait while your grievances
-                are being loaded.
-              </p>
-
-            </div>
-
-          )}
-
-
-          {/* =================================================
-              ERROR
-          ================================================= */}
-
+          {/* ERROR STATE */}
           {error && (
+            <ErrorState
+              title="Unable to load grievance records"
+              message={error}
+              onRetry={loadPage}
+            />
+          )}
 
-            <div className="applicant-state-card error">
-
-              <div className="applicant-state-icon error">
-                !
+          {/* TABLE CONTAINER CARD */}
+          <section className="authority-content-card data-table-card">
+            {/* TOOLBAR */}
+            <div className="table-card-toolbar">
+              <div className="table-search-box">
+                <span className="search-icon">🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search by Tracking ID, title, or keyword..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                {search && (
+                  <button type="button" className="search-clear-btn" onClick={() => setSearch("")}>
+                    ✕
+                  </button>
+                )}
               </div>
 
-              <h3>
-                Unable to load grievances
-              </h3>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  style={{
+                    padding: "7px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #e2e8f0",
+                    fontSize: "12px",
+                    background: "#ffffff",
+                    fontWeight: 600,
+                  }}
+                >
+                  <option value="ALL">All Statuses</option>
+                  <option value="SUBMITTED">Submitted</option>
+                  <option value="AI_PROCESSING">AI Processing</option>
+                  <option value="PENDING_REVIEW">Pending Review</option>
+                  <option value="ASSIGNED">Assigned</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="RESOLVED">Resolved</option>
+                  <option value="CLOSED">Closed</option>
+                  <option value="ESCALATED">Escalated</option>
+                </select>
 
-              <p>
-                {error}
-              </p>
-
-              <button
-                type="button"
-                className="applicant-primary-button"
-                onClick={loadPage}
-              >
-                Try Again
-              </button>
-
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  style={{
+                    padding: "7px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #e2e8f0",
+                    fontSize: "12px",
+                    background: "#ffffff",
+                    fontWeight: 600,
+                  }}
+                >
+                  <option value="ALL">All Priorities</option>
+                  <option value="HIGH">High</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="LOW">Low</option>
+                </select>
+              </div>
             </div>
 
-          )}
-
-
-          {/* =================================================
-              GRIEVANCES
-          ================================================= */}
-
-          {!loading && !error && (
-
-            <section className="applicant-content-card">
-
-
-              {/* HEADER */}
-
-              <div className="applicant-section-header">
-
-                <div>
-
-                  <h2>
-                    All Grievances
-                  </h2>
-
-                  <p>
-                    {filteredGrievances.length}{" "}
-                    grievance
-                    {filteredGrievances.length !== 1
-                      ? "s"
-                      : ""}{" "}
-                    found
-                  </p>
-
-                </div>
-
-              </div>
-
-
-              {/* TABLE */}
-
-              <div className="applicant-grievance-table">
-
-
-                {/* TABLE HEADER */}
-
-                <div className="applicant-grievance-table-header">
-
-                  <span>
-                    Grievance
-                  </span>
-
-                  <span>
-                    Category
-                  </span>
-
-                  <span>
-                    Status
-                  </span>
-
-                  <span>
-                    Priority
-                  </span>
-
-                  <span>
-                    Date
-                  </span>
-
-                  <span>
-                    Action
-                  </span>
-
-                </div>
-
-
-                {/* EMPTY */}
-
-                {filteredGrievances.length === 0 ? (
-
-                  <div className="applicant-empty-state">
-
-                    <div className="applicant-empty-icon">
-                      ◌
-                    </div>
-
-                    <h3>
-                      No grievances found
-                    </h3>
-
-                    <p>
-                      Try changing your search
-                      or filters.
-                    </p>
-
-                  </div>
-
-                ) : (
-
-                  filteredGrievances.map(
-                    (grievance) => (
-
-                      <Link
-                        key={grievance.id}
-                        to={`/dashboard/grievances/${grievance.grievance_id}`}
-                        className="applicant-grievance-table-row"
-                      >
-
-
-                        {/* GRIEVANCE */}
-
-                        <div className="applicant-grievance-main-info">
-
-                          <strong>
-                            {grievance.title}
-                          </strong>
-
-                          <span>
-                            {grievance.grievance_id}
-                          </span>
-
-                        </div>
-
-
-                        {/* CATEGORY */}
-
-                        <div className="applicant-grievance-category">
-
-                          {getCategory(
-                            grievance
-                          )}
-
-                        </div>
-
-
-                        {/* STATUS */}
-
-                        <div>
-
-                          <span
-                            className={`applicant-status-badge ${
-                              grievance.status
-                                ?.toLowerCase()
-                                .replaceAll(
-                                  "_",
-                                  "-"
-                                )
-                            }`}
+            {/* TABLE */}
+            {loading ? (
+              <LoadingState message="Loading your grievances..." />
+            ) : filteredGrievances.length === 0 ? (
+              <EmptyState
+                icon="📭"
+                title="No grievances found"
+                description={
+                  search || statusFilter !== "ALL" || priorityFilter !== "ALL"
+                    ? "No grievances match your search or filter criteria."
+                    : "You have not submitted any grievances yet."
+                }
+                actionText={search || statusFilter !== "ALL" || priorityFilter !== "ALL" ? "Clear Filters" : "+ Submit New Grievance"}
+                actionLink={search || statusFilter !== "ALL" || priorityFilter !== "ALL" ? "" : "/dashboard/submit"}
+                onAction={() => {
+                  setSearch("");
+                  setStatusFilter("ALL");
+                  setPriorityFilter("ALL");
+                }}
+              />
+            ) : (
+              <div className="data-table-wrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Tracking ID</th>
+                      <th>Title & Summary</th>
+                      <th>Category</th>
+                      <th>Priority</th>
+                      <th>Submitted Date</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: "right" }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredGrievances.map((g) => (
+                      <tr key={g.id || g.grievance_id}>
+                        <td>
+                          <span className="table-id-chip">{g.grievance_id}</span>
+                        </td>
+                        <td>
+                          <strong className="table-row-title">{g.title}</strong>
+                          <p className="table-row-desc">{g.description}</p>
+                        </td>
+                        <td>
+                          <span className="table-cat-badge">{getCategoryName(g)}</span>
+                        </td>
+                        <td>
+                          <PriorityBadge priority={g.priority} />
+                        </td>
+                        <td>
+                          <span className="table-date-text">{formatDate(g.submitted_at)}</span>
+                        </td>
+                        <td>
+                          <StatusBadge status={g.status} />
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <Link
+                            to={`/dashboard/grievances/${g.grievance_id}`}
+                            className="table-action-link"
                           >
-
-                            {formatStatus(
-                              grievance.status
-                            )}
-
-                          </span>
-
-                        </div>
-
-
-                        {/* PRIORITY */}
-
-                        <div>
-
-                          <span
-                            className={`applicant-priority ${
-                              grievance.priority
-                                ?.toLowerCase()
-                            }`}
-                          >
-
-                            {grievance.priority}
-
-                          </span>
-
-                        </div>
-
-
-                        {/* DATE */}
-
-                        <div className="applicant-grievance-date">
-
-                          {formatDate(
-                            grievance.created_at
-                          )}
-
-                        </div>
-
-
-                        {/* ACTION */}
-
-                        <div>
-
-                          <span className="applicant-outline-button">
-                            Track →
-                          </span>
-
-                        </div>
-
-
-                      </Link>
-
-                    )
-                  )
-
-                )}
-
+                            Track Status →
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-
-            </section>
-
-          )}
-
+            )}
+          </section>
         </main>
-
       </div>
-
     </div>
-
   );
-
 }
-
 
 export default MyGrievances;

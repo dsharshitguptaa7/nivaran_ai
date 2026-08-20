@@ -96,3 +96,39 @@ export async function reviewAIRecommendation(
 export async function getCategories() {
   return apiRequest("/categories");
 }
+
+export async function resolveGrievance(grievanceId, resolutionNotes) {
+  return apiRequest(`/grievances/${grievanceId}/resolve`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      resolution_notes: resolutionNotes,
+    }),
+  });
+}
+
+export async function closeGrievance(grievanceId, closureRemarks) {
+  return apiRequest(`/grievances/${grievanceId}/close`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      closure_remarks: closureRemarks,
+    }),
+  });
+}
+
+export async function reopenGrievance(grievanceId, reason) {
+  return apiRequest(`/grievances/${grievanceId}/reopen`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      reason,
+    }),
+  });
+}

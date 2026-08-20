@@ -76,10 +76,79 @@ class AIReviewRequest(BaseModel):
 
 
 class GrievanceRoutingResponse(BaseModel):
-    can_forward: bool
+    can_forward: bool = False
+    can_resolve: bool = False
+    can_close: bool = False
+    can_escalate: bool = False
     routing_type: str | None = None
+    next_authority_id: UUID | None = None
     next_authority_role: str | None = None
     next_authority_name: str | None = None
+
+
+# ============================================================
+# DOCUMENT RESPONSE
+# ============================================================
+
+class DocumentResponse(BaseModel):
+    id: UUID
+    grievance_id: UUID
+    uploaded_by: UUID
+    uploader_name: str | None = None
+    file_name: str
+    file_path: str
+    mime_type: str
+    file_size: int
+    document_type: str | None = "ATTACHMENT"
+    created_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
+# ============================================================
+# RESOLVE / CLOSE / REOPEN SCHEMAS
+# ============================================================
+
+class GrievanceResolveRequest(BaseModel):
+    resolution_notes: str = Field(
+        ...,
+        min_length=3,
+        description="Detailed explanation of how the grievance was resolved",
+    )
+
+
+class GrievanceCloseRequest(BaseModel):
+    closure_remarks: str | None = Field(
+        default=None,
+        description="Remarks or notes by Manager confirming closure",
+    )
+
+
+class GrievanceReopenRequest(BaseModel):
+    reason: str = Field(
+        ...,
+        min_length=3,
+        description="Reason for reopening the grievance or returning for rework",
+    )
+
+
+# ============================================================
+# APPLICANT SUMMARY RESPONSE
+# ============================================================
+
+class ApplicantSummaryResponse(BaseModel):
+    id: UUID
+    full_name: str
+    email: str
+    phd_registration_number: str | None = None
+    subject_name: str | None = None
+    department: str | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 
 # ============================================================
@@ -90,6 +159,7 @@ class GrievanceResponse(BaseModel):
     id: UUID
     grievance_id: str
     applicant_id: UUID
+    applicant: ApplicantSummaryResponse | None = None
 
     title: str
     description: str
@@ -97,6 +167,7 @@ class GrievanceResponse(BaseModel):
     # Original / AI category
     category_id: UUID | None = None
     category: CategoryResponse | None = None
+    subject_name: str | None = None
 
     # Manager final category decision
     final_category_id: UUID | None = None
@@ -112,6 +183,17 @@ class GrievanceResponse(BaseModel):
 
     routing: GrievanceRoutingResponse | None = None
 
+    resolution_notes: str | None = None
+    resolved_by_id: UUID | None = None
+    resolved_by_name: str | None = None
+
+    closure_remarks: str | None = None
+    closed_by_id: UUID | None = None
+    closed_by_name: str | None = None
+
+    documents: list[DocumentResponse] = []
+    document_requests: list["DocumentRequestResponse"] = []
+
     submitted_at: datetime
     resolved_at: datetime | None = None
     closed_at: datetime | None = None
@@ -122,4 +204,9 @@ class GrievanceResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True
     )
+
+
+# Late import to prevent circular dependency
+from app.schemas.document_request import DocumentRequestResponse  # noqa: E402
+GrievanceResponse.model_rebuild()
 
