@@ -11,18 +11,23 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
-    # ==================================================
-    # CORS CONFIGURATION
-    # ==================================================
+   # ==================================================
+# CORS CONFIGURATION
+# ==================================================
 
-    ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
+ALLOWED_ORIGINS: str = (
+    "http://localhost:5173,"
+    "http://127.0.0.1:5173,"
+    "https://nivaran-ai-tau.vercel.app"
+)
 
-    @property
-    def cors_origins(self) -> List[str]:
-        if not self.ALLOWED_ORIGINS:
-            return ["http://localhost:5173", "http://127.0.0.1:5173"]
-        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",") if origin.strip()]
-
+@property
+def cors_origins(self) -> List[str]:
+    return [
+        origin.strip()
+        for origin in self.ALLOWED_ORIGINS.split(",")
+        if origin.strip()
+    ]
     # ==================================================
     # STORAGE CONFIGURATION
     # ==================================================
@@ -54,7 +59,7 @@ class Settings(BaseSettings):
     # FRONTEND
     # ==================================================
 
-    FRONTEND_URL: str = "http://localhost:5173"
+    FRONTEND_URL: str = "https://nivaran-ai-tau.vercel.app"
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -63,4 +68,4 @@ class Settings(BaseSettings):
     )
 
 
-settings = Settings()
+settings = Settings()
