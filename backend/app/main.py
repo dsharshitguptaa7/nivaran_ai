@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from sqlalchemy import text
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -110,9 +110,11 @@ def health_check():
             "database": "connected",
         }
 
-    except Exception as e:
-        return {
-            "status": "unhealthy",
-            "database": "disconnected",
-            "error": str(e),
-        }
+    except Exception:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "unhealthy",
+                "database": "disconnected",
+            },
+        )
