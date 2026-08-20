@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Union
+from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,23 +11,24 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
-   # ==================================================
-# CORS CONFIGURATION
-# ==================================================
+    # ==================================================
+    # CORS CONFIGURATION
+    # ==================================================
 
-ALLOWED_ORIGINS: str = (
-    "http://localhost:5173,"
-    "http://127.0.0.1:5173,"
-    "https://nivaran-ai-tau.vercel.app"
-)
+    ALLOWED_ORIGINS: str = (
+        "http://localhost:5173,"
+        "http://127.0.0.1:5173,"
+        "https://nivaran-ai-tau.vercel.app"
+    )
 
-@property
-def cors_origins(self) -> List[str]:
-    return [
-        origin.strip()
-        for origin in self.ALLOWED_ORIGINS.split(",")
-        if origin.strip()
-    ]
+    @property
+    def cors_origins(self) -> List[str]:
+        return [
+            origin.strip()
+            for origin in self.ALLOWED_ORIGINS.split(",")
+            if origin.strip()
+        ]
+
     # ==================================================
     # STORAGE CONFIGURATION
     # ==================================================
@@ -39,7 +40,12 @@ def cors_origins(self) -> List[str]:
         if self.STORAGE_DIR:
             p = Path(self.STORAGE_DIR)
         else:
-            p = Path(__file__).resolve().parent.parent.parent / "storage" / "documents"
+            p = (
+                Path(__file__).resolve().parent.parent.parent
+                / "storage"
+                / "documents"
+            )
+
         p.mkdir(parents=True, exist_ok=True)
         return p
 
