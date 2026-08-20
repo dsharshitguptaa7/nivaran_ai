@@ -15,11 +15,7 @@ class Settings(BaseSettings):
     # CORS CONFIGURATION
     # ==================================================
 
-    ALLOWED_ORIGINS: str = (
-        "http://localhost:5173,"
-        "http://127.0.0.1:5173,"
-        "https://nivaran-ai-tau.vercel.app"
-    )
+    ALLOWED_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,https://nivaran-ai-tau.vercel.app"
 
     @property
     def cors_origins(self) -> List[str]:
