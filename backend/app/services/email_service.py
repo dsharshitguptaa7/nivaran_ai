@@ -1,8 +1,9 @@
 import logging
-import smtplib
-from email.message import EmailMessage
+
 from pathlib import Path
 from typing import Optional
+
+import resend
 
 from app.core.config import settings
 
@@ -35,58 +36,59 @@ def send_email(
     text_content: Optional[str] = None,
 ) -> bool:
     """
-    Send an email via SMTP.
-    Safely catches and logs errors, never raising an exception to the caller.
+    Send an email using Resend API.
     Returns True if sent successfully, False otherwise.
     """
+
     if not to_email or "@" not in to_email:
-        logger.warning(f"[EMAIL_FAILED] Invalid recipient email address: '{to_email}'")
+        logger.warning(
+            f"[EMAIL_FAILED] Invalid recipient email address: '{to_email}'"
+        )
+        return False
+
+    if not settings.RESEND_API_KEY:
+        logger.error(
+            "[EMAIL_FAILED] RESEND_API_KEY is not configured"
+        )
         return False
 
     try:
-        message = EmailMessage()
-        from_header = settings.SMTP_FROM or f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>"
-        message["From"] = from_header
-        message["To"] = to_email
-        message["Subject"] = subject
+        resend.api_key = settings.RESEND_API_KEY
 
-        # Plain text fallback
-        plain_text = text_content or html_content
-        message.set_content(plain_text)
+        from_email = (
+            f"{settings.RESEND_FROM_NAME} "
+            f"<{settings.RESEND_FROM_EMAIL}>"
+        )
 
-        # HTML payload
-        if html_content and html_content != plain_text:
-            message.add_alternative(html_content, subtype="html")
+        params = {
+            "from": from_email,
+            "to": [to_email],
+            "subject": subject,
+            "html": html_content,
+        }
 
-        print(
-           f"[EMAIL] Connecting to "
-           f"{settings.SMTP_HOST}:{settings.SMTP_PORT}"
-             )
+        if text_content:
+            params["text"] = text_content
 
-        timeout_seconds = 10
-        with smtplib.SMTP(
-            settings.SMTP_HOST,
-            settings.SMTP_PORT,
-            timeout=timeout_seconds,
-        ) as server:
-            print("[EMAIL] SMTP connection established")
-            server.starttls()
-            print("[EMAIL] STARTTLS successful")
-            if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
-                server.login(
-                    settings.SMTP_USERNAME,
-                    settings.SMTP_PASSWORD,
-                )
-                print("[EMAIL] SMTP login successful")
-            server.send_message(message)
+        response = resend.Emails.send(params)
 
-        logger.info(f"[EMAIL_SENT] Email sent successfully to {to_email} | Subject: '{subject}'")
+        logger.info(
+            f"[EMAIL_SENT] Email sent successfully to "
+            f"{to_email} | Subject: '{subject}' | "
+            f"Resend ID: {response.get('id')}"
+        )
+
         return True
 
     except Exception as err:
-        logger.error(f"[EMAIL_FAILED] Failed to send email to {to_email} | Subject: '{subject}' | Error: {type(err).__name__}: {err}")
-        return False
 
+        logger.error(
+            f"[EMAIL_FAILED] Failed to send email to "
+            f"{to_email} | Subject: '{subject}' | "
+            f"Error: {type(err).__name__}: {err}"
+        )
+
+        return False
 
 def send_document_request_email(
     applicant_email: str,
