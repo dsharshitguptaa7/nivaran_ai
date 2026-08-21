@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = "noreply@nivaran.ac.in"
     SMTP_FROM_NAME: str = "NIVARAN-AI"
 
+    
     # ==================================================
     # FRONTEND
     # ==================================================

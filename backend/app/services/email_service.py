@@ -58,18 +58,26 @@ def send_email(
         if html_content and html_content != plain_text:
             message.add_alternative(html_content, subtype="html")
 
+        print(
+           f"[EMAIL] Connecting to "
+           f"{settings.SMTP_HOST}:{settings.SMTP_PORT}"
+             )
+
         timeout_seconds = 10
         with smtplib.SMTP(
             settings.SMTP_HOST,
             settings.SMTP_PORT,
             timeout=timeout_seconds,
         ) as server:
+            print("[EMAIL] SMTP connection established")
             server.starttls()
+            print("[EMAIL] STARTTLS successful")
             if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
                 server.login(
                     settings.SMTP_USERNAME,
                     settings.SMTP_PASSWORD,
                 )
+                print("[EMAIL] SMTP login successful")
             server.send_message(message)
 
         logger.info(f"[EMAIL_SENT] Email sent successfully to {to_email} | Subject: '{subject}'")
@@ -225,4 +233,4 @@ def send_grievance_closed_email(
 
     except Exception as err:
         logger.error(f"[GRIEVANCE_CLOSED_EMAIL_FAILED] Error preparing closure email for {grievance_id}: {err}")
-        return False
+        return False
