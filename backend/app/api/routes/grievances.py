@@ -440,25 +440,30 @@ def process_grievance_ai(
             detail="Grievance not found",
         )
 
-    # AI processing can only start from SUBMITTED.
-    if grievance.status != GrievanceStatus.SUBMITTED:
+    # Allow AI processing on SUBMITTED, AI_PROCESSING, or PENDING_REVIEW
+    allowed_statuses = {
+        GrievanceStatus.SUBMITTED,
+        GrievanceStatus.AI_PROCESSING,
+        GrievanceStatus.PENDING_REVIEW,
+    }
+    if grievance.status not in allowed_statuses:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
-                "AI processing can only start from "
-                f"SUBMITTED status. "
+                "AI processing can only run on SUBMITTED, AI_PROCESSING, or PENDING_REVIEW grievances. "
                 f"Current status: {grievance.status.value}"
             ),
         )
 
-    # SUBMITTED -> AI_PROCESSING
-    change_grievance_status(
-        db=db,
-        grievance=grievance,
-        new_status=GrievanceStatus.AI_PROCESSING,
-        changed_by=current_user,
-        reason="AI processing started",
-    )
+    # SUBMITTED -> AI_PROCESSING (if starting from SUBMITTED)
+    if grievance.status == GrievanceStatus.SUBMITTED:
+        change_grievance_status(
+            db=db,
+            grievance=grievance,
+            new_status=GrievanceStatus.AI_PROCESSING,
+            changed_by=current_user,
+            reason="AI processing started",
+        )
 
     # Run AI processing
     record = process_grievance(
@@ -466,14 +471,15 @@ def process_grievance_ai(
         grievance=grievance,
     )
 
-    # AI_PROCESSING -> PENDING_REVIEW
-    change_grievance_status(
-        db=db,
-        grievance=grievance,
-        new_status=GrievanceStatus.PENDING_REVIEW,
-        changed_by=current_user,
-        reason="AI processing completed",
-    )
+    # Transition to PENDING_REVIEW if not already there
+    if grievance.status != GrievanceStatus.PENDING_REVIEW:
+        change_grievance_status(
+            db=db,
+            grievance=grievance,
+            new_status=GrievanceStatus.PENDING_REVIEW,
+            changed_by=current_user,
+            reason="AI processing completed",
+        )
 
     db.commit()
     db.refresh(record)

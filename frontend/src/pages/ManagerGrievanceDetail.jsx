@@ -435,6 +435,8 @@ function ManagerGrievanceDetail() {
   const isResolved = grievance.status === "RESOLVED";
   const isClosed = grievance.status === "CLOSED";
 
+  console.log("FULL GRIEVANCE DATA:", grievance);
+
   return (
     <div className="authority-page">
       <AuthorityHeader

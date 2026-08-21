@@ -1,7 +1,8 @@
+import logging
 import time
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.ai_processing import (
@@ -11,16 +12,79 @@ from app.models.ai_processing import (
 from app.models.grievance import Grievance
 from app.models.category import Category
 
-from app.ai.inference.category_predictor import predict_category
+from app.ai.pipeline import ai_pipeline, DEFAULT_MODEL_NAME, DEFAULT_MODEL_VERSION
 
 from app.db.database import SessionLocal
 from app.models.enums import GrievanceStatus
 from app.models.grievance_status_history import HistoryActorType
 from app.services.grievance_workflow import change_grievance_status
 
+logger = logging.getLogger("nivaran_ai.ai_processing")
 
-DEFAULT_MODEL_NAME = "NIVARAN-AI"
-DEFAULT_MODEL_VERSION = "0.1.0"
+
+def resolve_db_category(db: Session, predicted_name: str) -> Category:
+    """
+    Resiliently resolves a predicted category string to an active Category in the database.
+    Attempts:
+      1. Exact match
+      2. Case-insensitive match
+      3. Space/underscore normalized match
+      4. Fallback to 'Other' or first active category
+    """
+    if not predicted_name:
+        predicted_name = "Other"
+
+    # 1. Exact match
+    category = db.scalar(
+        select(Category).where(
+            Category.name == predicted_name,
+            Category.is_active.is_(True),
+        )
+    )
+    if category is not None:
+        return category
+
+    # 2. Case-insensitive match
+    category = db.scalar(
+        select(Category).where(
+            func.lower(Category.name) == predicted_name.lower(),
+            Category.is_active.is_(True),
+        )
+    )
+    if category is not None:
+        return category
+
+    # 3. Space / underscore normalized match
+    all_categories = db.scalars(
+        select(Category).where(Category.is_active.is_(True))
+    ).all()
+
+    norm_pred = predicted_name.replace("_", " ").strip().lower()
+    for cat in all_categories:
+        if cat.name.replace("_", " ").strip().lower() == norm_pred:
+            return cat
+
+    # Partial substring match
+    for cat in all_categories:
+        cat_norm = cat.name.replace("_", " ").strip().lower()
+        if norm_pred in cat_norm or cat_norm in norm_pred:
+            return cat
+
+    # 4. Fallback to 'Other' category
+    other_category = db.scalar(
+        select(Category).where(
+            func.lower(Category.name) == "other",
+            Category.is_active.is_(True),
+        )
+    )
+    if other_category is not None:
+        return other_category
+
+    # Absolute fallback: return first active category
+    if all_categories:
+        return all_categories[0]
+
+    raise ValueError("No active categories found in database to map grievance.")
 
 
 def create_ai_processing_record(
@@ -74,7 +138,6 @@ def complete_ai_processing(
     if grievance is not None:
         grievance.category_id = predicted_category_id
         grievance.ai_confidence = confidence_score
-
         db.add(grievance)
 
     db.add(record)
@@ -118,32 +181,24 @@ def process_grievance(
     )
 
     try:
-
         # --------------------------------------------------
-        # 1. CATEGORY PREDICTION
+        # 1. UNIFIED AI INFERENCE (Category + Confidence)
         # --------------------------------------------------
-
-        category_name, confidence_score = predict_category(
+        ai_result = ai_pipeline.process_grievance_text(
             title=grievance.title,
             description=grievance.description,
         )
 
-        category = db.scalar(
-            select(Category).where(
-                Category.name == category_name,
-                Category.is_active.is_(True),
-            )
+        category_name = ai_result["predicted_category"]
+        confidence_score = ai_result["confidence_score"]
+
+        # --------------------------------------------------
+        # 2. RESILIENT CATEGORY RESOLUTION
+        # --------------------------------------------------
+        category = resolve_db_category(
+            db=db,
+            predicted_name=category_name,
         )
-
-        if category is None:
-            raise ValueError(
-                f"Predicted category not found in database: "
-                f"{category_name}"
-            )
-
-        # --------------------------------------------------
-        # 2. PROCESSING TIME
-        # --------------------------------------------------
 
         processing_time_ms = int(
             (time.perf_counter() - start_time) * 1000
@@ -152,7 +207,6 @@ def process_grievance(
         # --------------------------------------------------
         # 3. COMPLETE AI RECORD
         # --------------------------------------------------
-
         complete_ai_processing(
             db=db,
             record=record,
@@ -164,7 +218,7 @@ def process_grievance(
         return record
 
     except Exception as e:
-
+        logger.error(f"[AI] Error during process_grievance for {grievance.grievance_id}: {e}")
         processing_time_ms = int(
             (time.perf_counter() - start_time) * 1000
         )

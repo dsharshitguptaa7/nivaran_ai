@@ -7,10 +7,21 @@ from app.db.database import engine
 
 def migrate_notification_types():
     new_enum_values = [
+        "GRIEVANCE_SUBMITTED",
+        "GRIEVANCE_ASSIGNED",
         "GRIEVANCE_FORWARDED",
+        "GRIEVANCE_ESCALATED",
         "GRIEVANCE_STATUS_CHANGED",
+        "GRIEVANCE_RESOLVED",
+        "GRIEVANCE_CLOSED",
         "GRIEVANCE_REOPENED",
+        "INFORMATION_REQUESTED",
+        "DOCUMENT_REQUESTED",
+        "DOCUMENT_UPLOADED",
+        "DOCUMENT_APPROVED",
+        "DOCUMENT_REJECTED",
         "REMINDER",
+        "SYSTEM",
     ]
 
     with engine.connect() as conn:
@@ -18,7 +29,7 @@ def migrate_notification_types():
             try:
                 conn.execute(text(f"ALTER TYPE notification_type ADD VALUE IF NOT EXISTS '{val}'"))
                 conn.commit()
-                print(f"[OK] Added enum value '{val}' to notification_type.")
+                print(f"[OK] Ensured enum value '{val}' in notification_type.")
             except Exception as e:
                 conn.rollback()
                 print(f"[NOTE] Enum value '{val}' check: {e}")
