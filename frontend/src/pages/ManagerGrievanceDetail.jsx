@@ -153,10 +153,16 @@ function ManagerGrievanceDetail() {
       setReviewError("");
       setReviewMessage("");
 
+      const targetCatId =
+        grievance.category_id ||
+        grievance.category?.id ||
+        grievance.ai_processing?.predicted_category_id ||
+        grievance.final_category_id;
+
       const response = await reviewAIRecommendation(
         grievance.grievance_id,
-        grievance.category_id || grievance.category?.id,
-        "ACCEPTED"
+        targetCatId,
+        "CONFIRMED"
       );
 
       const refreshed = await getGrievance(grievance.grievance_id);

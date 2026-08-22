@@ -620,9 +620,21 @@ def review_ai_recommendation(
     # 5. Validate category
     # --------------------------------------------------
 
+    target_category_id = (
+        review_data.category_id
+        or ai_processing.predicted_category_id
+        or grievance.category_id
+    )
+
+    if target_category_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Category ID must be provided or predicted by AI.",
+        )
+
     category = db.scalar(
         select(Category).where(
-            Category.id == review_data.category_id,
+            Category.id == target_category_id,
             Category.is_active.is_(True),
         )
     )
@@ -637,16 +649,20 @@ def review_ai_recommendation(
     # 6. Validate review decision
     # --------------------------------------------------
 
-    if review_data.decision == AIReviewDecision.CONFIRMED:
+    is_confirmed_decision = review_data.decision in {
+        AIReviewDecision.CONFIRMED,
+        AIReviewDecision.ACCEPTED,
+    }
 
+    if is_confirmed_decision:
         if (
             ai_processing.predicted_category_id
-            != review_data.category_id
+            and ai_processing.predicted_category_id != category.id
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=(
-                    "For CONFIRMED decision, category must "
+                    "For CONFIRMED/ACCEPTED decision, category must "
                     "match the AI recommendation."
                 ),
             )
@@ -674,7 +690,7 @@ def review_ai_recommendation(
     grievance.final_category_id = category.id
     grievance.category_reviewed = True
 
-    if review_data.decision == AIReviewDecision.CONFIRMED:
+    if is_confirmed_decision:
 
         grievance.category_overridden = False
 

@@ -67,11 +67,12 @@ class AIProcessingSummary(BaseModel):
 
 class AIReviewDecision(str, Enum):
     CONFIRMED = "CONFIRMED"
+    ACCEPTED = "ACCEPTED"
     OVERRIDDEN = "OVERRIDDEN"
 
 
 class AIReviewRequest(BaseModel):
-    category_id: UUID
+    category_id: UUID | None = None
     decision: AIReviewDecision
 
 
