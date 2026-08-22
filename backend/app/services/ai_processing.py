@@ -124,6 +124,7 @@ def complete_ai_processing(
     predicted_category_id: UUID | None = None,
     confidence_score: float | None = None,
     processing_time_ms: int | None = None,
+    grievance: Grievance | None = None,
 ) -> AIProcessingRecord:
 
     record.predicted_category_id = predicted_category_id
@@ -132,13 +133,17 @@ def complete_ai_processing(
     record.status = AIProcessingStatus.COMPLETED
     record.error_message = None
 
-    # Sync AI category result back to grievance
-    grievance = record.grievance
+    # Sync AI category result back to grievance directly
+    target_grievance = grievance or record.grievance
+    if target_grievance is None and record.grievance_id:
+        target_grievance = db.scalar(select(Grievance).where(Grievance.id == record.grievance_id))
 
-    if grievance is not None:
-        grievance.category_id = predicted_category_id
-        grievance.ai_confidence = confidence_score
-        db.add(grievance)
+    if target_grievance is not None:
+        target_grievance.category_id = predicted_category_id
+        target_grievance.ai_confidence = confidence_score
+        if not target_grievance.final_category_id:
+            target_grievance.final_category_id = predicted_category_id
+        db.add(target_grievance)
 
     db.add(record)
     db.flush()
@@ -213,7 +218,16 @@ def process_grievance(
             predicted_category_id=category.id,
             confidence_score=confidence_score,
             processing_time_ms=processing_time_ms,
+            grievance=grievance,
         )
+
+        # Explicit direct synchronization on grievance
+        grievance.category_id = category.id
+        grievance.ai_confidence = confidence_score
+        if not grievance.final_category_id:
+            grievance.final_category_id = category.id
+        db.add(grievance)
+        db.flush()
 
         return record
 

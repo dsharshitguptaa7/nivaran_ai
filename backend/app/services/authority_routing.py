@@ -178,19 +178,20 @@ def get_fixed_authority(
     grievance: Grievance,
 ) -> User:
     """
-    Find the fixed authority configured for the final category.
+    Find the fixed authority configured for the grievance category.
     """
+    cat_id = grievance.final_category_id or grievance.category_id
 
-    if grievance.final_category_id is None:
+    if cat_id is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Final grievance category is not set.",
+            detail="Grievance category is not set.",
         )
 
     category = db.scalar(
         select(Category)
         .where(
-            Category.id == grievance.final_category_id,
+            Category.id == cat_id,
             Category.is_active.is_(True),
         )
     )
@@ -198,7 +199,7 @@ def get_fixed_authority(
     if category is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Final grievance category not found or inactive.",
+            detail="Grievance category not found or inactive.",
         )
 
     if category.routing_type != CategoryRoutingType.FIXED_AUTHORITY:
@@ -270,17 +271,18 @@ def get_expected_forward_target(
     FIXED_AUTHORITY
         → Fixed authority
     """
+    cat_id = grievance.final_category_id or grievance.category_id
 
-    if grievance.final_category_id is None:
+    if cat_id is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Final grievance category is not set.",
+            detail="Grievance category is not set.",
         )
 
     category = db.scalar(
         select(Category)
         .where(
-            Category.id == grievance.final_category_id,
+            Category.id == cat_id,
             Category.is_active.is_(True),
         )
     )
@@ -288,7 +290,7 @@ def get_expected_forward_target(
     if category is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Final grievance category not found or inactive.",
+            detail="Grievance category not found or inactive.",
         )
 
     if category.routing_type == CategoryRoutingType.GRIEVANCE_CLUSTER:
@@ -344,13 +346,14 @@ def get_next_authority_for_grievance(
         return None
 
     # For Assistant Dean or other assigned authorities:
-    if grievance.final_category_id is None:
+    cat_id = grievance.final_category_id or grievance.category_id
+    if cat_id is None:
         return None
 
     category = db.scalar(
         select(Category)
         .where(
-            Category.id == grievance.final_category_id,
+            Category.id == cat_id,
             Category.is_active.is_(True),
         )
     )

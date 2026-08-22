@@ -194,31 +194,51 @@ def create_grievance(
 
     db.add(history)
 
+    # Automatically run instant AI processing
+    try:
+        change_grievance_status(
+            db=db,
+            grievance=grievance,
+            new_status=GrievanceStatus.AI_PROCESSING,
+            changed_by=None,
+            actor_type=HistoryActorType.SYSTEM,
+            reason="AI processing started automatically",
+        )
+        process_grievance(db=db, grievance=grievance)
+        change_grievance_status(
+            db=db,
+            grievance=grievance,
+            new_status=GrievanceStatus.PENDING_REVIEW,
+            changed_by=None,
+            actor_type=HistoryActorType.SYSTEM,
+            reason="AI processing completed automatically",
+        )
+    except Exception as e:
+        logger.error(f"[AI Processing] Auto-classification error on creation: {e}")
+        if grievance.status != GrievanceStatus.PENDING_REVIEW:
+            change_grievance_status(
+                db=db,
+                grievance=grievance,
+                new_status=GrievanceStatus.PENDING_REVIEW,
+                changed_by=None,
+                actor_type=HistoryActorType.SYSTEM,
+                reason="Grievance queued for Manager review",
+            )
+
     # Notify applicant
     create_notification(
         db=db,
         user_id=current_user.id,
         notification_type=NotificationType.GRIEVANCE_SUBMITTED,
         title="Grievance Submitted",
-        message=f"Your grievance {grievance.grievance_id} has been successfully submitted and is being processed.",
+        message=f"Your grievance {grievance.grievance_id} has been successfully submitted and is under review.",
         grievance_id=grievance.id,
     )
 
     db.commit()
     db.refresh(grievance)
 
-    # ---------------------------------------------
-# Start AI processing automatically
-# AFTER grievance is committed
-# ---------------------------------------------
-
-    background_tasks.add_task(
-        run_ai_processing_background,
-        grievance.id,
-    )
-
-
-    return grievance
+    return build_full_grievance_response(db, grievance, current_user)
 
 
 # ============================================================
@@ -471,7 +491,8 @@ def process_grievance_ai(
 ):
     grievance = db.scalar(
         select(Grievance).where(
-            Grievance.grievance_id == grievance_id
+            (Grievance.grievance_id == grievance_id)
+            | (Grievance.id == (uuid.UUID(grievance_id) if len(grievance_id) == 36 else None))
         )
     )
 

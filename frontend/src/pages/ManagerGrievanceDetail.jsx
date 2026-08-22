@@ -29,6 +29,7 @@ import {
   getGrievance,
   getGrievanceHistory,
   reviewAIRecommendation,
+  processGrievanceAI,
   closeGrievance,
   reopenGrievance,
 } from "../services/grievanceService";
@@ -199,6 +200,27 @@ function ManagerGrievanceDetail() {
     } catch (err) {
       console.error("Override category error:", err);
       setReviewError(err?.message || "Unable to override category.");
+    } finally {
+      setReviewLoading(false);
+    }
+  }
+
+  async function handleTriggerAIAnalysis() {
+    if (!grievance) return;
+    try {
+      setReviewLoading(true);
+      setReviewError("");
+      setReviewMessage("");
+
+      await processGrievanceAI(grievance.grievance_id || grievance.id);
+      const refreshed = await getGrievance(grievance.grievance_id || grievance.id);
+      setGrievance(refreshed);
+      setReviewMessage("AI Analysis completed successfully.");
+      const updatedHistory = await getGrievanceHistory(grievance.grievance_id || grievance.id);
+      setHistory(Array.isArray(updatedHistory) ? updatedHistory : []);
+    } catch (err) {
+      console.error("Trigger AI error:", err);
+      setReviewError(err?.message || "Failed to trigger AI analysis.");
     } finally {
       setReviewLoading(false);
     }
@@ -437,9 +459,10 @@ function ManagerGrievanceDetail() {
   const applicantName = getApplicantName(grievance);
   const timelineItems = history.length > 0 ? history : (grievance.timeline || []);
 
-  const isPendingReview = grievance.status === "PENDING_REVIEW";
+  const isPendingReview = ["PENDING_REVIEW", "SUBMITTED", "AI_PROCESSING"].includes(grievance.status);
   const isResolved = grievance.status === "RESOLVED";
   const isClosed = grievance.status === "CLOSED";
+  const canValidateCategory = !isResolved && !isClosed;
 
   return (
     <div className="authority-page">
@@ -607,10 +630,19 @@ function ManagerGrievanceDetail() {
           {/* CLASSIFICATION & CASE ROUTING SECTION */}
           <div className="detail-section-spacer">
             <AIAnalysisCard
-              predictedCategory={grievance.category?.name || "Not classified"}
+              predictedCategory={
+                grievance.category?.name ||
+                grievance.ai_processing?.predicted_category?.name ||
+                (grievance.final_category && !grievance.category_overridden ? grievance.final_category.name : null) ||
+                "Not classified"
+              }
               finalCategory={grievance.final_category?.name}
               clusterName={clusterName}
-              confidenceScore={grievance.ai_confidence}
+              confidenceScore={
+                grievance.ai_confidence != null
+                  ? grievance.ai_confidence
+                  : grievance.ai_processing?.confidence_score
+              }
               isOverridden={grievance.category_overridden}
             />
           </div>
@@ -628,7 +660,7 @@ function ManagerGrievanceDetail() {
           )}
 
           {/* MANAGER AI CATEGORY REVIEW & FORWARDING CARD */}
-          {isPendingReview && (
+          {canValidateCategory && (
             <section className="detail-card authority-decision-card">
               <div className="detail-card-header">
                 <div className="detail-card-title-wrap">
@@ -638,7 +670,7 @@ function ManagerGrievanceDetail() {
                     <p>
                       {grievance.category_reviewed
                         ? "Category has been validated. You can forward to the designated authority or change category override."
-                        : "Accept the predicted category or select an alternative override before forwarding."}
+                        : "Accept the predicted category, run AI classification, or select an alternative override before forwarding."}
                     </p>
                   </div>
                 </div>
@@ -662,16 +694,33 @@ function ManagerGrievanceDetail() {
                     )}
                   </div>
                 ) : (
-                  <div className="action-button-row">
-                    <button
-                      type="button"
-                      className="authority-primary-button"
-                      onClick={handleAcceptCategory}
-                      disabled={reviewLoading}
-                    >
-                      <Check size={14} />
-                      <span>{reviewLoading ? "Accepting..." : `Accept Category: "${grievance.category?.name || 'Current'}"`}</span>
-                    </button>
+                  <div className="action-button-row" style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    {(grievance.category?.name || grievance.ai_processing?.predicted_category?.name) ? (
+                      <button
+                        type="button"
+                        className="authority-primary-button"
+                        onClick={handleAcceptCategory}
+                        disabled={reviewLoading}
+                      >
+                        <Check size={14} />
+                        <span>
+                          {reviewLoading
+                            ? "Accepting..."
+                            : `Accept Category: "${grievance.category?.name || grievance.ai_processing?.predicted_category?.name}"`}
+                        </span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="authority-primary-button"
+                        onClick={handleTriggerAIAnalysis}
+                        disabled={reviewLoading}
+                        style={{ backgroundColor: "#4f46e5" }}
+                      >
+                        <Layers size={14} />
+                        <span>{reviewLoading ? "Running AI Classification..." : "Run AI Classification Now"}</span>
+                      </button>
+                    )}
                   </div>
                 )}
 

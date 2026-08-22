@@ -6,6 +6,10 @@ from typing import Any, Dict, Optional, Tuple
 
 import joblib
 
+# Ensure huggingface and tokenizers never block or make remote HTTP requests
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
 logger = logging.getLogger("nivaran_ai.pipeline")
 
 # ==============================================================================
@@ -69,11 +73,9 @@ class AIPipeline:
         self._initialized = True
 
     def _get_embedding_model(self):
-        """Lazy-load SentenceTransformer only when clustering is requested."""
+        """Lazy-load SentenceTransformer safely without remote network stall."""
         if self._embedding_model is None:
             try:
-                # Suppress noisy HF warning if no token
-                os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
                 from sentence_transformers import SentenceTransformer
                 self._embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
                 logger.info("[AI Pipeline] SentenceTransformer embeddings initialized.")
