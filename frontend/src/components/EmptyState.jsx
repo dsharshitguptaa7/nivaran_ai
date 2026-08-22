@@ -1,7 +1,9 @@
+import React from "react";
 import { Link } from "react-router-dom";
+import { Inbox } from "lucide-react";
 
 export default function EmptyState({
-  icon = "📭",
+  icon,
   title = "No records found",
   description = "There are no items matching your criteria at this time.",
   actionText = "",
@@ -11,7 +13,13 @@ export default function EmptyState({
 }) {
   return (
     <div className={`empty-state-card ${className}`}>
-      <div className="empty-state-icon">{icon}</div>
+      <div className="empty-state-icon" aria-hidden="true">
+        {icon ? (
+          typeof icon === "string" ? <span>{icon}</span> : icon
+        ) : (
+          <Inbox size={36} strokeWidth={1.5} className="empty-state-default-icon" />
+        )}
+      </div>
       <h3 className="empty-state-title">{title}</h3>
       <p className="empty-state-desc">{description}</p>
 
@@ -33,3 +41,4 @@ export default function EmptyState({
     </div>
   );
 }
+

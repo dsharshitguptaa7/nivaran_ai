@@ -1,5 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  Inbox,
+  ClipboardCheck,
+  FileCheck,
+  AlertTriangle,
+  FolderOpen,
+  CheckCircle2,
+  RefreshCw,
+  Search,
+  X,
+  ChevronRight,
+  Activity,
+  ArrowRight,
+  ShieldAlert,
+  Layers,
+  Sparkles,
+  FileText,
+  Clock,
+  Check,
+} from "lucide-react";
 
 import { getCurrentUser, logoutUser } from "../services/authService";
 import { getAllGrievances } from "../services/grievanceService";
@@ -62,7 +82,7 @@ function ManagerDashboard() {
   }
 
   // =====================================================
-  // STATISTICS
+  // METRICS & COUNTS
   // =====================================================
   const total = grievances.length;
 
@@ -142,12 +162,70 @@ function ManagerDashboard() {
     navigate("/login");
   };
 
+  // Structured enterprise navigation
   const navItems = [
-    { label: "Dashboard", path: "/manager", icon: "▦", active: true },
-    { label: "Pending AI Review", path: "#", icon: "⏳", count: pendingReview, onClick: () => setFilterStatus("PENDING_REVIEW") },
-    { label: "Closure Review", path: "#", icon: "✓", count: resolvedReview, onClick: () => setFilterStatus("RESOLVED") },
-    { label: "Escalated Cases", path: "#", icon: "▲", count: escalated, onClick: () => setFilterStatus("ESCALATED") },
+    { isHeader: true, label: "OVERVIEW" },
+    {
+      label: "Dashboard",
+      path: "/manager",
+      icon: <Inbox />,
+      active: filterStatus === "ALL" && !searchQuery,
+      onClick: () => {
+        setFilterStatus("ALL");
+        setSearchQuery("");
+      },
+    },
+
+    { isHeader: true, label: "CASE MANAGEMENT" },
+    {
+      label: "Pending AI Review",
+      path: "#",
+      icon: <ClipboardCheck />,
+      count: pendingReview,
+      badgeVariant: "warning",
+      active: filterStatus === "PENDING_REVIEW",
+      onClick: () => setFilterStatus("PENDING_REVIEW"),
+    },
+    {
+      label: "Closure Review",
+      path: "#",
+      icon: <FileCheck />,
+      count: resolvedReview,
+      badgeVariant: "success",
+      active: filterStatus === "RESOLVED",
+      onClick: () => setFilterStatus("RESOLVED"),
+    },
+    {
+      label: "Escalated Cases",
+      path: "#",
+      icon: <AlertTriangle />,
+      count: escalated,
+      badgeVariant: "danger",
+      active: filterStatus === "ESCALATED",
+      onClick: () => setFilterStatus("ESCALATED"),
+    },
+
+    { isHeader: true, label: "CASE REGISTRY" },
+    {
+      label: "Active In-Progress",
+      path: "#",
+      icon: <FolderOpen />,
+      count: inProgress,
+      active: filterStatus === "ASSIGNED",
+      onClick: () => setFilterStatus("ASSIGNED"),
+    },
+    {
+      label: "Formally Closed",
+      path: "#",
+      icon: <CheckCircle2 />,
+      count: closed,
+      active: filterStatus === "CLOSED",
+      onClick: () => setFilterStatus("CLOSED"),
+    },
   ];
+
+  // Action required summary count
+  const actionCount = pendingReview + resolvedReview + escalated;
 
   return (
     <div className="authority-page">
@@ -173,21 +251,37 @@ function ManagerDashboard() {
         <main className="authority-main">
           {/* PAGE HEADER */}
           <section className="authority-page-header">
-            <div>
-              <div className="authority-page-eyebrow">CSJMU CENTRAL REDRESSAL OPERATIONS</div>
-              <h1>Manager Portal</h1>
-              <p>Monitor intake, validate AI classifications, review authority resolutions, and manage final closures.</p>
+            <div className="header-title-block">
+              <div className="authority-page-eyebrow">
+                <span className="eyebrow-badge">MANAGER WORKSPACE</span>
+                <span className="eyebrow-institution">CSJMU Central Redressal Operations</span>
+              </div>
+              <h1 className="header-main-title">Manager Operations Portal</h1>
+              <p className="header-subtitle">
+                Monitor institutional intake, audit AI category predictions, verify authority resolutions, and manage final case closures.
+              </p>
             </div>
 
             <div className="authority-header-actions">
+              {/* OPERATIONAL HEALTH BADGE */}
+              <div className="system-health-pill" title="All backend services and ML inference nodes active">
+                <span className="system-health-dot" />
+                <span className="system-health-text">System Operational</span>
+              </div>
+
+              {/* CLOCK & DATE UTILITY */}
               <LiveDateTime format="full" />
+
+              {/* REFRESH ACTION */}
               <button
                 type="button"
-                className="authority-primary-button"
+                className="authority-primary-button refresh-btn"
                 onClick={loadDashboard}
                 disabled={loading}
+                title="Refresh dashboard metrics and queue"
               >
-                {loading ? "Refreshing..." : "↻ Refresh"}
+                <RefreshCw size={14} className={loading ? "spin-animation" : ""} />
+                <span>{loading ? "Refreshing..." : "Refresh"}</span>
               </button>
             </div>
           </section>
@@ -201,63 +295,251 @@ function ManagerDashboard() {
             />
           )}
 
+          {/* ACTION REQUIRED / IMMEDIATE ATTENTION SECTION */}
+          {actionCount > 0 && !loading && (
+            <section className="action-required-section" aria-label="Action Required">
+              <div className="action-required-header">
+                <div className="action-required-title-wrap">
+                  <ShieldAlert size={18} className="action-required-icon" />
+                  <h2>Immediate Action Items</h2>
+                </div>
+                <span className="action-required-badge">
+                  {actionCount} {actionCount === 1 ? "Case Requires Attention" : "Cases Require Attention"}
+                </span>
+              </div>
+
+              <div className="action-required-grid">
+                {pendingReview > 0 && (
+                  <div
+                    className={`action-item-card warning ${filterStatus === "PENDING_REVIEW" ? "active" : ""}`}
+                    onClick={() => setFilterStatus("PENDING_REVIEW")}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="action-item-icon warning">
+                      <ClipboardCheck size={20} />
+                    </div>
+                    <div className="action-item-content">
+                      <div className="action-item-count">{pendingReview}</div>
+                      <strong className="action-item-title">Awaiting AI Validation</strong>
+                      <p className="action-item-desc">
+                        AI category classified. Validate and confirm to route to assigned authorities.
+                      </p>
+                    </div>
+                    <div className="action-item-link">
+                      <span>Review AI Queue</span>
+                      <ArrowRight size={14} />
+                    </div>
+                  </div>
+                )}
+
+                {resolvedReview > 0 && (
+                  <div
+                    className={`action-item-card success ${filterStatus === "RESOLVED" ? "active" : ""}`}
+                    onClick={() => setFilterStatus("RESOLVED")}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="action-item-icon success">
+                      <FileCheck size={20} />
+                    </div>
+                    <div className="action-item-content">
+                      <div className="action-item-count">{resolvedReview}</div>
+                      <strong className="action-item-title">Closure Verification</strong>
+                      <p className="action-item-desc">
+                        Authority marked resolved. Review redressal report and perform formal closure.
+                      </p>
+                    </div>
+                    <div className="action-item-link">
+                      <span>Review Closures</span>
+                      <ArrowRight size={14} />
+                    </div>
+                  </div>
+                )}
+
+                {escalated > 0 && (
+                  <div
+                    className={`action-item-card danger ${filterStatus === "ESCALATED" ? "active" : ""}`}
+                    onClick={() => setFilterStatus("ESCALATED")}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="action-item-icon danger">
+                      <AlertTriangle size={20} />
+                    </div>
+                    <div className="action-item-content">
+                      <div className="action-item-count">{escalated}</div>
+                      <strong className="action-item-title">Escalated to Deans</strong>
+                      <p className="action-item-desc">
+                        High priority cases escalated due to complexity or time threshold.
+                      </p>
+                    </div>
+                    <div className="action-item-link">
+                      <span>View Escalations</span>
+                      <ArrowRight size={14} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* WORKFLOW LIFECYCLE TRACKER */}
+          <section className="workflow-tracker-card" aria-label="Grievance Operational Lifecycle">
+            <div className="workflow-tracker-header">
+              <div className="workflow-tracker-title-wrap">
+                <Layers size={16} className="workflow-tracker-icon" />
+                <h3>Institutional Redressal Lifecycle</h3>
+              </div>
+              <span className="workflow-tracker-total">{total} Total Grievances Tracked</span>
+            </div>
+
+            <div className="workflow-steps-track">
+              {/* Step 1: Intake */}
+              <div
+                className={`workflow-step ${filterStatus === "ALL" ? "selected" : ""}`}
+                onClick={() => setFilterStatus("ALL")}
+                title="View All Intake"
+                role="button"
+                tabIndex={0}
+              >
+                <div className="step-number-circle">1</div>
+                <div className="step-details">
+                  <span className="step-label">Intake Received</span>
+                  <strong className="step-count">{total}</strong>
+                </div>
+              </div>
+
+              <div className="step-connector" />
+
+              {/* Step 2: AI Review */}
+              <div
+                className={`workflow-step ${filterStatus === "PENDING_REVIEW" ? "selected" : ""}`}
+                onClick={() => setFilterStatus("PENDING_REVIEW")}
+                title="View Pending AI Review"
+                role="button"
+                tabIndex={0}
+              >
+                <div className="step-number-circle warning">2</div>
+                <div className="step-details">
+                  <span className="step-label">AI Review</span>
+                  <strong className="step-count text-amber-600">{pendingReview}</strong>
+                </div>
+              </div>
+
+              <div className="step-connector" />
+
+              {/* Step 3: Investigation */}
+              <div
+                className={`workflow-step ${filterStatus === "ASSIGNED" ? "selected" : ""}`}
+                onClick={() => setFilterStatus("ASSIGNED")}
+                title="View Active Cases"
+                role="button"
+                tabIndex={0}
+              >
+                <div className="step-number-circle blue">3</div>
+                <div className="step-details">
+                  <span className="step-label">Authority Action</span>
+                  <strong className="step-count text-blue-600">{inProgress}</strong>
+                </div>
+              </div>
+
+              <div className="step-connector" />
+
+              {/* Step 4: Closure Review */}
+              <div
+                className={`workflow-step ${filterStatus === "RESOLVED" ? "selected" : ""}`}
+                onClick={() => setFilterStatus("RESOLVED")}
+                title="View Closure Review"
+                role="button"
+                tabIndex={0}
+              >
+                <div className="step-number-circle success">4</div>
+                <div className="step-details">
+                  <span className="step-label">Closure Review</span>
+                  <strong className="step-count text-emerald-600">{resolvedReview}</strong>
+                </div>
+              </div>
+
+              <div className="step-connector" />
+
+              {/* Step 5: Closed */}
+              <div
+                className={`workflow-step ${filterStatus === "CLOSED" ? "selected" : ""}`}
+                onClick={() => setFilterStatus("CLOSED")}
+                title="View Closed Cases"
+                role="button"
+                tabIndex={0}
+              >
+                <div className="step-number-circle neutral">5</div>
+                <div className="step-details">
+                  <span className="step-label">Concluded</span>
+                  <strong className="step-count text-slate-700">{closed}</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* KPI CARDS GRID */}
-          <section className="authority-stat-grid">
+          <section className="authority-stat-grid" aria-label="Operational Key Metrics">
             <StatCard
-              icon="▤"
-              title="Total Received"
+              icon={<Inbox size={18} />}
+              title="TOTAL CASES"
               value={total}
-              subtitle="Institution-wide intake"
+              subtitle="Across all grievance categories"
               variant="default"
-              active={filterStatus === "ALL"}
-              onClick={() => setFilterStatus("ALL")}
+              active={filterStatus === "ALL" && !searchQuery}
+              onClick={() => {
+                setFilterStatus("ALL");
+                setSearchQuery("");
+              }}
             />
 
             <StatCard
-              icon="⏳"
-              title="Pending Review"
+              icon={<ClipboardCheck size={18} />}
+              title="AWAITING REVIEW"
               value={pendingReview}
-              subtitle="Requires AI review"
+              subtitle="Requires administrative action"
               variant="orange"
               active={filterStatus === "PENDING_REVIEW"}
               onClick={() => setFilterStatus("PENDING_REVIEW")}
             />
 
             <StatCard
-              icon="⚡"
-              title="AI Processing"
+              icon={<Activity size={18} />}
+              title="AI PROCESSING"
               value={aiProcessing}
-              subtitle="Pipeline classifying"
+              subtitle="Inference pipeline analyzing"
               variant="purple"
               active={filterStatus === "AI_PROCESSING"}
               onClick={() => setFilterStatus("AI_PROCESSING")}
             />
 
             <StatCard
-              icon="◉"
-              title="In Progress"
+              icon={<FolderOpen size={18} />}
+              title="ACTIVE CASES"
               value={inProgress}
-              subtitle="Under authority redressal"
+              subtitle="Currently under resolution"
               variant="blue"
               active={filterStatus === "ASSIGNED"}
               onClick={() => setFilterStatus("ASSIGNED")}
             />
 
             <StatCard
-              icon="★"
-              title="Closure Review"
+              icon={<FileCheck size={18} />}
+              title="PENDING CLOSURE"
               value={resolvedReview}
-              subtitle="Resolved by authority"
+              subtitle="Awaiting final verification"
               variant="green"
               active={filterStatus === "RESOLVED"}
               onClick={() => setFilterStatus("RESOLVED")}
             />
 
             <StatCard
-              icon="🔒"
-              title="Formally Closed"
+              icon={<CheckCircle2 size={18} />}
+              title="CLOSED CASES"
               value={closed}
-              subtitle="Verified & concluded"
+              subtitle="Resolved and formally concluded"
               variant="maroon"
               active={filterStatus === "CLOSED"}
               onClick={() => setFilterStatus("CLOSED")}
@@ -268,78 +550,106 @@ function ManagerDashboard() {
           <section className="authority-content-card data-table-card">
             {/* CARD TOOLBAR */}
             <div className="table-card-toolbar">
+              {/* SEARCH BOX */}
               <div className="table-search-box">
-                <span className="search-icon">🔍</span>
+                <Search size={16} className="search-icon" aria-hidden="true" />
                 <input
                   type="text"
-                  placeholder="Search by Grievance ID, title, or keyword..."
+                  placeholder="Search by Grievance ID, title, or keywords..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search grievances"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     className="search-clear-btn"
                     onClick={() => setSearchQuery("")}
+                    title="Clear search"
                   >
-                    ✕
+                    <X size={14} />
                   </button>
                 )}
               </div>
 
               {/* FILTER PILLS */}
-              <div className="table-filter-pills">
+              <div className="table-filter-pills" role="tablist" aria-label="Grievance Status Filters">
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={filterStatus === "ALL"}
                   className={`filter-pill ${filterStatus === "ALL" ? "active" : ""}`}
                   onClick={() => setFilterStatus("ALL")}
                 >
-                  All ({total})
+                  <span>All Cases</span>
+                  <span className="pill-count">{total}</span>
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={filterStatus === "PENDING_REVIEW"}
                   className={`filter-pill ${filterStatus === "PENDING_REVIEW" ? "active" : ""}`}
                   onClick={() => setFilterStatus("PENDING_REVIEW")}
                 >
-                  Pending AI ({pendingReview})
+                  <span>Pending AI</span>
+                  <span className="pill-count warning">{pendingReview}</span>
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={filterStatus === "ASSIGNED"}
+                  className={`filter-pill ${filterStatus === "ASSIGNED" ? "active" : ""}`}
+                  onClick={() => setFilterStatus("ASSIGNED")}
+                >
+                  <span>In Progress</span>
+                  <span className="pill-count">{inProgress}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={filterStatus === "RESOLVED"}
                   className={`filter-pill ${filterStatus === "RESOLVED" ? "active" : ""}`}
                   onClick={() => setFilterStatus("RESOLVED")}
                 >
-                  Closure Review ({resolvedReview})
+                  <span>Closure Review</span>
+                  <span className="pill-count success">{resolvedReview}</span>
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={filterStatus === "ESCALATED"}
                   className={`filter-pill ${filterStatus === "ESCALATED" ? "active" : ""}`}
                   onClick={() => setFilterStatus("ESCALATED")}
                 >
-                  Escalated ({escalated})
+                  <span>Escalated</span>
+                  <span className="pill-count danger">{escalated}</span>
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={filterStatus === "CLOSED"}
                   className={`filter-pill ${filterStatus === "CLOSED" ? "active" : ""}`}
                   onClick={() => setFilterStatus("CLOSED")}
                 >
-                  Closed ({closed})
+                  <span>Closed</span>
+                  <span className="pill-count">{closed}</span>
                 </button>
               </div>
             </div>
 
             {/* TABLE CONTENT */}
             {loading ? (
-              <LoadingState message="Loading grievance records..." />
+              <LoadingState message="Loading institutional grievance records..." />
             ) : filteredGrievances.length === 0 ? (
               <EmptyState
-                icon="📭"
+                icon={<Inbox size={40} strokeWidth={1.5} className="text-slate-400" />}
                 title="No grievances found"
                 description={
                   searchQuery || filterStatus !== "ALL"
-                    ? "No grievances match the active search criteria or filters."
-                    : "No grievances currently recorded in the system."
+                    ? "No grievances match the active search criteria or filter selection."
+                    : "No grievances currently recorded in the institutional database."
                 }
-                actionText={searchQuery || filterStatus !== "ALL" ? "Clear Filters" : ""}
+                actionText={searchQuery || filterStatus !== "ALL" ? "Reset All Filters" : ""}
                 onAction={() => {
                   setFilterStatus("ALL");
                   setSearchQuery("");
@@ -350,24 +660,28 @@ function ManagerDashboard() {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Grievance ID</th>
-                      <th>Title & Summary</th>
-                      <th>Category</th>
-                      <th>Priority</th>
-                      <th>Submitted Date</th>
-                      <th>Status</th>
-                      <th style={{ textAlign: "right" }}>Action</th>
+                      <th scope="col" style={{ width: "160px" }}>CASE ID</th>
+                      <th scope="col">GRIEVANCE DETAILS</th>
+                      <th scope="col" style={{ width: "170px" }}>CATEGORY</th>
+                      <th scope="col" style={{ width: "110px" }}>PRIORITY</th>
+                      <th scope="col" style={{ width: "130px" }}>SUBMITTED</th>
+                      <th scope="col" style={{ width: "160px" }}>STATUS</th>
+                      <th scope="col" style={{ width: "130px", textAlign: "right" }}>ACTION</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredGrievances.map((g) => (
-                      <tr key={g.id || g.grievance_id}>
+                      <tr key={g.id || g.grievance_id} className="data-table-row">
                         <td>
-                          <span className="table-id-chip">{g.grievance_id}</span>
+                          <span className="table-id-chip font-mono" title={`Grievance ID: ${g.grievance_id}`}>
+                            {g.grievance_id}
+                          </span>
                         </td>
                         <td>
-                          <strong className="table-row-title">{g.title}</strong>
-                          <p className="table-row-desc">{g.description}</p>
+                          <div className="table-detail-cell">
+                            <strong className="table-row-title">{g.title}</strong>
+                            <p className="table-row-desc">{g.description}</p>
+                          </div>
                         </td>
                         <td>
                           <span className="table-cat-badge">{getCategoryName(g)}</span>
@@ -385,14 +699,35 @@ function ManagerDashboard() {
                           <Link
                             to={`/manager/grievances/${g.grievance_id}`}
                             className="table-action-link"
+                            title={`Review grievance ${g.grievance_id}`}
                           >
-                            Review →
+                            <span>Review</span>
+                            <ChevronRight size={14} className="action-arrow" />
                           </Link>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+
+                {/* TABLE FOOTER / META */}
+                <div className="table-card-footer">
+                  <span className="table-footer-count">
+                    Showing <strong>{filteredGrievances.length}</strong> of <strong>{total}</strong> cases
+                  </span>
+                  {(searchQuery || filterStatus !== "ALL") && (
+                    <button
+                      type="button"
+                      className="table-footer-clear-btn"
+                      onClick={() => {
+                        setFilterStatus("ALL");
+                        setSearchQuery("");
+                      }}
+                    >
+                      Clear active filters
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </section>

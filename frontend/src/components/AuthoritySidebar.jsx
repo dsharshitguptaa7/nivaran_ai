@@ -1,4 +1,6 @@
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { LogOut } from "lucide-react";
 
 export default function AuthoritySidebar({
   portalLabel = "AUTHORITY PORTAL",
@@ -9,21 +11,49 @@ export default function AuthoritySidebar({
 }) {
   const location = useLocation();
   const initial = userName ? userName.charAt(0).toUpperCase() : "A";
-  const formattedRole = String(userRole).replaceAll("_", " ");
+  const formattedRole = String(userRole).replaceAll("_", " ").toUpperCase();
 
   return (
     <aside className="authority-sidebar">
       {/* PORTAL LABEL CHIP */}
       <div className="authority-sidebar-label">
+        <div className="sidebar-label-indicator" />
         <span>{portalLabel}</span>
       </div>
 
       {/* NAVIGATION ITEMS */}
       <nav className="authority-sidebar-nav">
         {navItems.map((item, idx) => {
-          const isActive = item.active !== undefined 
-            ? item.active 
-            : (item.path ? location.pathname === item.path : false);
+          if (item.isHeader) {
+            return (
+              <div key={idx} className="authority-nav-section-title">
+                {item.label}
+              </div>
+            );
+          }
+
+          const isActive =
+            item.active !== undefined
+              ? item.active
+              : item.path
+              ? location.pathname === item.path
+              : false;
+
+          const content = (
+            <>
+              {item.icon && (
+                <span className="authority-nav-icon" aria-hidden="true">
+                  {typeof item.icon === "string" ? item.icon : React.cloneElement(item.icon, { size: 16 })}
+                </span>
+              )}
+              <span className="authority-nav-text">{item.label}</span>
+              {item.count !== undefined && item.count > 0 && (
+                <span className={`authority-nav-badge ${item.badgeVariant || ""}`}>
+                  {item.count}
+                </span>
+              )}
+            </>
+          );
 
           if (item.href) {
             return (
@@ -32,11 +62,7 @@ export default function AuthoritySidebar({
                 href={item.href}
                 className={`authority-nav-item ${isActive ? "active" : ""}`}
               >
-                {item.icon && <span className="authority-nav-icon">{item.icon}</span>}
-                <span className="authority-nav-text">{item.label}</span>
-                {item.count !== undefined && item.count > 0 && (
-                  <span className="authority-nav-badge">{item.count}</span>
-                )}
+                {content}
               </a>
             );
           }
@@ -48,11 +74,7 @@ export default function AuthoritySidebar({
               className={`authority-nav-item ${isActive ? "active" : ""}`}
               onClick={item.onClick}
             >
-              {item.icon && <span className="authority-nav-icon">{item.icon}</span>}
-              <span className="authority-nav-text">{item.label}</span>
-              {item.count !== undefined && item.count > 0 && (
-                <span className="authority-nav-badge">{item.count}</span>
-              )}
+              {content}
             </Link>
           );
         })}
@@ -63,8 +85,8 @@ export default function AuthoritySidebar({
         <div className="authority-sidebar-user">
           <div className="authority-sidebar-avatar">{initial}</div>
           <div className="authority-sidebar-user-details">
-            <strong>{userName}</strong>
-            <span>{formattedRole}</span>
+            <strong className="authority-sidebar-user-name">{userName}</strong>
+            <span className="authority-sidebar-user-role">{formattedRole}</span>
           </div>
         </div>
 
@@ -73,9 +95,10 @@ export default function AuthoritySidebar({
             type="button"
             className="authority-sidebar-logout-btn"
             onClick={onLogout}
-            title="Sign out"
+            title="Sign out of portal"
           >
-            ↪ Sign Out
+            <LogOut size={14} className="sidebar-logout-icon" />
+            <span>Sign Out</span>
           </button>
         )}
       </div>

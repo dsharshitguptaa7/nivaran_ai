@@ -1,3 +1,6 @@
+import React from "react";
+import { Layers, Tag, GitBranch, Gauge, Info, CheckCircle2 } from "lucide-react";
+
 export default function AIAnalysisCard({
   predictedCategory,
   finalCategory,
@@ -7,84 +10,107 @@ export default function AIAnalysisCard({
   isOverridden = false,
   className = "",
 }) {
-  const formattedConfidence =
+  const numericConf =
     confidenceScore != null
-      ? `${(
-          confidenceScore > 1
-            ? confidenceScore
-            : confidenceScore * 100
-        ).toFixed(1)}%`
-      : "Not available";
+      ? confidenceScore > 1
+        ? confidenceScore
+        : confidenceScore * 100
+      : null;
+
+  const formattedConfidence =
+    numericConf != null ? `${numericConf.toFixed(1)}%` : "Not available";
+
+  // Confidence color calibration
+  let confColor = "#2563eb"; // blue
+  if (numericConf != null) {
+    if (numericConf >= 80) confColor = "#059669"; // green
+    else if (numericConf >= 60) confColor = "#d97706"; // amber
+    else confColor = "#64748b"; // slate
+  }
 
   return (
-    <section className={`detail-card ai-analysis-card ${className}`}>
+    <section className={`detail-card classification-routing-card ${className}`}>
+      {/* CARD HEADER */}
       <div className="detail-card-header">
-        <div className="ai-card-title">
-          <div className="ai-detail-icon">AI</div>
-
+        <div className="detail-card-title-wrap">
+          <Layers size={18} className="classification-icon text-slate-700" />
           <div>
-            <h2>AI Autonomous Analysis</h2>
-            <span className="ai-model-tag">{modelName}</span>
+            <h2>Classification & Case Routing</h2>
+            <span className="classification-model-text">
+              Inference Framework: {modelName}
+            </span>
           </div>
         </div>
 
-        <div className="ai-active-indicator">• AI Active</div>
+        <div className="classification-status-pill">
+          <span className="classification-status-dot" />
+          <span>Automated Classification</span>
+        </div>
       </div>
 
-      <div className="detail-card-body">
-
-        {/* AI PREDICTED CATEGORY */}
-        <div className="ai-detail-row">
-          <span>AI Predicted Category</span>
-          <strong>
+      {/* 3-COLUMN METRICS GRID */}
+      <div className="classification-metrics-grid">
+        {/* Metric 1: Predicted Category */}
+        <div className="classification-metric-cell">
+          <div className="metric-cell-label">
+            <Tag size={13} className="text-slate-500" />
+            <span>PREDICTED CATEGORY</span>
+          </div>
+          <strong className="metric-cell-value">
             {predictedCategory || "Not classified"}
           </strong>
+          {isOverridden && finalCategory && (
+            <div className="metric-override-tag">
+              <CheckCircle2 size={12} />
+              <span>Manager Final: {finalCategory}</span>
+            </div>
+          )}
         </div>
 
-        {/* MANAGER VERIFIED CATEGORY */}
-        {isOverridden && finalCategory && (
-          <div className="ai-detail-row highlight-override">
-            <span>Manager Verified Category</span>
+        {/* Metric 2: Routing Cluster */}
+        <div className="classification-metric-cell">
+          <div className="metric-cell-label">
+            <GitBranch size={13} className="text-slate-500" />
+            <span>SEMANTIC ROUTING CLUSTER</span>
+          </div>
+          <strong className="metric-cell-value text-slate-800">
+            {clusterName || "Academic Affairs"}
+          </strong>
+          <span className="metric-cell-sub">Domain Routing Channel</span>
+        </div>
 
-            <strong style={{ color: "var(--success, #059669)" }}>
-              ✓ {finalCategory}
+        {/* Metric 3: Model Confidence */}
+        <div className="classification-metric-cell">
+          <div className="metric-cell-label">
+            <Gauge size={13} className="text-slate-500" />
+            <span>MODEL CONFIDENCE</span>
+          </div>
+          <div className="metric-confidence-wrap">
+            <strong className="metric-cell-value" style={{ color: confColor }}>
+              {formattedConfidence}
             </strong>
+            {numericConf != null && (
+              <div className="confidence-progress-track">
+                <div
+                  className="confidence-progress-bar"
+                  style={{
+                    width: `${Math.min(numericConf, 100)}%`,
+                    backgroundColor: confColor,
+                  }}
+                />
+              </div>
+            )}
           </div>
-        )}
-
-        {/* SEMANTIC ROUTING CLUSTER */}
-        <div className="ai-detail-row">
-          <span>Semantic Routing Cluster</span>
-
-          <strong>
-            {clusterName || "Not available"}
-          </strong>
+          <span className="metric-cell-sub">Predictive Certainty Index</span>
         </div>
+      </div>
 
-        {/* MODEL CONFIDENCE */}
-        <div className="ai-detail-row">
-          <span>Model Confidence</span>
-
-          <strong className="ai-confidence-score">
-            {formattedConfidence}
-          </strong>
-        </div>
-
-        {/* AI POLICY */}
-        <div className="ai-advisory-box">
-          <span className="ai-advisory-bullet">•</span>
-
-          <div>
-            <strong>AI Decision Support Policy</strong>
-
-            <p>
-              AI classification and semantic routing recommendations serve as
-              advisory decision-support. Final administrative authority remains
-              under authorized university governance.
-            </p>
-          </div>
-        </div>
-
+      {/* POLICY / ADVISORY DISCLAIMER */}
+      <div className="classification-advisory-box">
+        <Info size={15} className="advisory-info-icon" />
+        <p className="advisory-text">
+          Classification and routing recommendations are advisory decision-support. Final administrative determination remains under authorized university governance.
+        </p>
       </div>
     </section>
   );

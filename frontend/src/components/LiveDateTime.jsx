@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Calendar, Clock } from "lucide-react";
 
 export default function LiveDateTime({ format = "full", className = "" }) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -28,7 +29,7 @@ export default function LiveDateTime({ format = "full", className = "" }) {
   if (format === "compact") {
     return (
       <div className={`live-datetime-chip compact ${className}`} title="System Current Time">
-        <span className="live-clock-icon">🕒</span>
+        <Clock size={13} className="live-clock-icon" />
         <span className="live-date-text">{formattedDate}</span>
         <span className="live-time-divider">•</span>
         <span className="live-time-text">{formattedTime}</span>
@@ -37,13 +38,14 @@ export default function LiveDateTime({ format = "full", className = "" }) {
   }
 
   return (
-    <div className={`live-datetime-chip ${className}`} title="Real-time Portal Clock">
+    <div className={`live-datetime-chip ${className}`} title="Real-time Operational Clock">
       <div className="live-pulse-dot" />
-      <span className="live-clock-icon">📅</span>
+      <Calendar size={13} className="live-clock-icon text-slate-500" />
       <span className="live-date-text">{formattedDate}</span>
       <span className="live-time-divider">|</span>
-      <span className="live-clock-icon">⏰</span>
-      <strong className="live-time-text">{formattedTime}</strong>
+      <Clock size={13} className="live-clock-icon text-slate-500" />
+      <strong className="live-time-text font-mono">{formattedTime}</strong>
     </div>
   );
 }
+

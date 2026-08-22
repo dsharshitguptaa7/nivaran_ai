@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FilePlus, AlertCircle, Trash2, Plus, Send, X } from "lucide-react";
 import { requestDocuments } from "../services/documentRequestService";
 
 export default function RequestDocumentModal({
@@ -80,7 +81,7 @@ export default function RequestDocumentModal({
       >
         <div className="authority-modal-header">
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "1.3rem" }}>📄</span>
+            <FilePlus size={20} className="text-slate-700" />
             <div>
               <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "700" }}>
                 Request Additional Documents
@@ -96,7 +97,7 @@ export default function RequestDocumentModal({
             onClick={onClose}
             aria-label="Close"
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 
@@ -112,9 +113,13 @@ export default function RequestDocumentModal({
                   borderRadius: "8px",
                   fontSize: "0.85rem",
                   marginBottom: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
                 }}
               >
-                ⚠ {error}
+                <AlertCircle size={16} />
+                <span>{error}</span>
               </div>
             )}
 
@@ -151,9 +156,13 @@ export default function RequestDocumentModal({
                           cursor: "pointer",
                           fontSize: "0.8rem",
                           fontWeight: "500",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
                         }}
                       >
-                        ✕ Remove
+                        <Trash2 size={13} />
+                        <span>Remove</span>
                       </button>
                     )}
                   </div>
@@ -239,7 +248,8 @@ export default function RequestDocumentModal({
                   transition: "all 0.2s ease",
                 }}
               >
-                + Add Another Document Request
+                <Plus size={15} />
+                <span>Add Another Document Request</span>
               </button>
 
               <div style={{ marginTop: "6px" }}>
@@ -282,7 +292,8 @@ export default function RequestDocumentModal({
               disabled={loading}
               style={{ display: "flex", alignItems: "center", gap: "6px" }}
             >
-              {loading ? "Sending Request..." : "📤 Send Document Request"}
+              <Send size={14} />
+              <span>{loading ? "Sending Request..." : "Send Document Request"}</span>
             </button>
           </div>
         </form>
@@ -290,3 +301,4 @@ export default function RequestDocumentModal({
     </div>
   );
 }
+

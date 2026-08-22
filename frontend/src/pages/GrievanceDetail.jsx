@@ -1,5 +1,29 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  FileText,
+  Folder,
+  Layers,
+  GitBranch,
+  User,
+  Paperclip,
+  Upload,
+  Download,
+  History,
+  CheckCircle2,
+  Scale,
+  AlertCircle,
+  AlertTriangle,
+  FolderOpen,
+  LayoutDashboard,
+  FilePlus,
+  ListOrdered,
+  Building2,
+  HelpCircle,
+} from "lucide-react";
 
 import {
   getGrievance,
@@ -169,10 +193,10 @@ function GrievanceDetail() {
   };
 
   const navItems = [
-    { label: "Dashboard", path: "/dashboard", icon: "⌂" },
-    { label: "Submit Grievance", path: "/dashboard/submit", icon: "✎" },
-    { label: "My Grievances", path: "/dashboard/grievances", icon: "≡" },
-    { label: "Tracking Detail", path: "#", icon: "▤", active: true },
+    { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={16} /> },
+    { label: "Submit Grievance", path: "/dashboard/submit", icon: <FilePlus size={16} /> },
+    { label: "My Grievances", path: "/dashboard/grievances", icon: <ListOrdered size={16} /> },
+    { label: "Tracking Detail", path: "#", icon: <FileText size={16} />, active: true },
   ];
 
   if (loading) {
@@ -233,48 +257,62 @@ function GrievanceDetail() {
 
         {/* MAIN CONTENT */}
         <main className="authority-main">
-          {/* BREADCRUMB */}
-          <Link to="/dashboard/grievances" className="detail-back-link">
-            ← Back to My Grievances
-          </Link>
+          {/* COMPACT BREADCRUMB */}
+          <div className="detail-navigation-bar">
+            <Link to="/dashboard/grievances" className="detail-back-link">
+              <ArrowLeft size={15} />
+              <span>Back to My Grievances</span>
+            </Link>
+          </div>
 
           {/* PAGE HEADER */}
           <header className="detail-page-header">
-            <div>
-              <span className="table-id-chip">{grievance.grievance_id}</span>
-              <h1>{grievance.title}</h1>
-              <p>Submitted on {formatDate(grievance.submitted_at)} ({formatDateTime(grievance.submitted_at)})</p>
+            <div className="detail-header-main">
+              <div className="detail-header-meta-row">
+                <span className="table-id-chip font-mono">{grievance.grievance_id}</span>
+                <span className="meta-divider">•</span>
+                <div className="detail-header-timestamp">
+                  <Calendar size={13} className="text-slate-400" />
+                  <span>Submitted {formatDate(grievance.submitted_at)}</span>
+                </div>
+                {grievance.updated_at && (
+                  <>
+                    <span className="meta-divider">•</span>
+                    <div className="detail-header-timestamp">
+                      <Clock size={13} className="text-slate-400" />
+                      <span>Updated {formatDateTime(grievance.updated_at)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              <h1 className="detail-case-title">{grievance.title}</h1>
             </div>
 
             <StatusBadge status={grievance.status} />
           </header>
 
           {/* NOTIFICATION MESSAGES */}
-          {docMessage && <div className="authority-doc-success-msg" style={{ marginBottom: "20px" }}>✓ {docMessage}</div>}
-          {docError && <div className="dashboard-error" style={{ marginBottom: "20px" }}><span>!</span><p>{docError}</p></div>}
+          {docMessage && (
+            <div className="authority-doc-success-msg">
+              <CheckCircle2 size={16} />
+              <span>{docMessage}</span>
+            </div>
+          )}
+          {docError && (
+            <div className="dashboard-error">
+              <AlertCircle size={16} />
+              <p>{docError}</p>
+            </div>
+          )}
 
           {/* ACTION REQUIRED BANNER FOR APPLICANT */}
           {(grievance.status === "AWAITING_INFORMATION" ||
             grievance.document_requests?.some((d) => d.status === "PENDING" || d.status === "REJECTED")) && (
-            <div
-              style={{
-                background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
-                border: "1px solid #fde68a",
-                borderRadius: "12px",
-                padding: "18px 22px",
-                marginBottom: "24px",
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "14px",
-                boxShadow: "0 2px 6px rgba(180, 83, 9, 0.08)",
-              }}
-            >
-              <span style={{ fontSize: "1.6rem", lineHeight: 1 }}>⚠</span>
+            <div className="applicant-action-required-banner">
+              <AlertTriangle size={24} className="text-amber-700 flex-shrink-0" />
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "700", color: "#92400e" }}>
-                  ACTION REQUIRED: Additional Supporting Documents Requested
-                </h3>
-                <p style={{ margin: "4px 0 0 0", fontSize: "0.88rem", color: "#78350f", lineHeight: "1.4" }}>
+                <h3>ACTION REQUIRED: Additional Supporting Documents Requested</h3>
+                <p>
                   The administrative authority reviewing your grievance has requested additional document(s).
                   Please review the requested items below and upload the necessary files so processing can continue.
                 </p>
@@ -284,51 +322,68 @@ function GrievanceDetail() {
 
           {/* REQUESTED SUPPORTING DOCUMENTS SECTION */}
           {grievance.document_requests && grievance.document_requests.length > 0 && (
-            <DocumentRequestsSection
-              documentRequests={grievance.document_requests}
-              grievanceId={grievance.grievance_id || grievance.id}
-              isApplicant={true}
-              onRefresh={loadGrievance}
-            />
+            <div className="detail-section-spacer">
+              <DocumentRequestsSection
+                documentRequests={grievance.document_requests}
+                grievanceId={grievance.grievance_id || grievance.id}
+                isApplicant={true}
+                onRefresh={loadGrievance}
+              />
+            </div>
           )}
 
           {/* 2-COLUMN GRID (DETAILS + APPLICANT INFO) */}
           <div className="detail-top-grid">
             <section className="detail-card">
               <div className="detail-card-header">
-                <h2>Grievance Details</h2>
+                <div className="detail-card-title-wrap">
+                  <FileText size={18} className="text-slate-700" />
+                  <div>
+                    <h2>Grievance Details</h2>
+                    <p>Core statement and submission record</p>
+                  </div>
+                </div>
               </div>
 
               <div className="detail-card-body">
                 <div className="detail-field">
-                  <span>TITLE</span>
-                  <strong>{grievance.title}</strong>
+                  <span className="detail-field-label">TITLE</span>
+                  <strong className="detail-field-value text-slate-900">{grievance.title}</strong>
                 </div>
 
                 <div className="detail-field">
-                  <span>DESCRIPTION</span>
-                  <p>{grievance.description}</p>
+                  <span className="detail-field-label">DESCRIPTION</span>
+                  <p className="detail-description-text">{grievance.description}</p>
                 </div>
 
                 <div className="detail-meta-grid">
                   <div className="detail-field">
-                    <span>CATEGORY</span>
-                    <strong>{categoryName}</strong>
+                    <span className="detail-field-label">CATEGORY</span>
+                    <div className="flex-val-row">
+                      <Folder size={13} className="text-slate-500" />
+                      <strong className="detail-field-value text-slate-800">{categoryName}</strong>
+                    </div>
                   </div>
 
                   <div className="detail-field">
-                    <span>CLUSTER</span>
-                    <strong>{clusterName}</strong>
+                    <span className="detail-field-label">CLUSTER</span>
+                    <div className="flex-val-row">
+                      <Layers size={13} className="text-slate-500" />
+                      <strong className="detail-field-value text-slate-800">{clusterName}</strong>
+                    </div>
                   </div>
 
                   <div className="detail-field">
-                    <span>PRIORITY</span>
+                    <span className="detail-field-label">PRIORITY</span>
                     <div><PriorityBadge priority={grievance.priority} /></div>
                   </div>
 
                   <div className="detail-field">
-                    <span>DEPARTMENT</span>
-                    <strong>{departmentName}</strong>
+                    <span className="detail-field-label">DEPARTMENT</span>
+                    <div className="flex-val-row">
+                      <Building2 size={13} className="text-slate-500" />
+                      <strong className="detail-field-value text-slate-800">{departmentName}</strong>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -346,37 +401,40 @@ function GrievanceDetail() {
           </div>
 
           {/* REDRESSAL STATUS OVERVIEW CARD */}
-          <div style={{ marginTop: "24px" }}>
+          <div className="detail-section-spacer">
             <section className="detail-card">
               <div className="detail-card-header">
-                <h2>Redressal Status & Tracking</h2>
+                <div className="detail-card-title-wrap">
+                  <Scale size={18} className="text-slate-700" />
+                  <div>
+                    <h2>Redressal Status & Tracking</h2>
+                    <p>Current workflow milestone and procedural status</p>
+                  </div>
+                </div>
                 <StatusBadge status={grievance.status} />
               </div>
 
-              <div className="detail-card-body" style={{ padding: "1.5rem" }}>
-                <div className="applicant-status-highlight-box" style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "16px", marginBottom: "16px" }}>
-                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Current Stage</span>
-                  <h3 style={{ fontSize: "16px", color: "var(--primary, #70162a)", margin: "4px 0 6px" }}>
+              <div className="detail-card-body">
+                <div className="applicant-status-highlight-box">
+                  <span className="current-stage-label">Current Stage</span>
+                  <h3 className="current-stage-title">
                     {formatStatus(grievance.status)}
                   </h3>
-                  <p style={{ fontSize: "13px", color: "#475569", margin: 0 }}>
-                    {grievance.status === "SUBMITTED" && "Grievance received in intake queue. Awaiting automated AI classification."}
-                    {grievance.status === "AI_PROCESSING" && "NIVARAN AI engine is categorizing and determining routing rules."}
-                    {grievance.status === "PENDING_REVIEW" && "Central Manager is reviewing AI recommendations before officer assignment."}
-                    {grievance.status === "ASSIGNED" && "Grievance assigned to designated Assistant Dean / Department for investigation."}
+                  <p className="current-stage-desc">
+                    {grievance.status === "SUBMITTED" && "Grievance received in intake queue. Awaiting automated classification."}
+                    {grievance.status === "AI_PROCESSING" && "Automated classification engine is determining category and domain routing rules."}
+                    {grievance.status === "PENDING_REVIEW" && "Central Redressal Manager is validating classification before authority assignment."}
+                    {grievance.status === "ASSIGNED" && "Grievance assigned to designated Assistant Dean / Department for redressal."}
                     {grievance.status === "IN_PROGRESS" && "Designated authority is actively processing and redressing your concern."}
-                    {grievance.status === "ESCALATED" && "Grievance referred to higher authority / Dean for institutional decision."}
+                    {grievance.status === "ESCALATED" && "Grievance referred to higher authority / Dean for institutional determination."}
                     {grievance.status === "RESOLVED" && "Authority has concluded redressal. Under final administrative verification."}
                     {grievance.status === "CLOSED" && "Redressal completed, verified, and officially archived."}
                   </p>
                 </div>
 
-                <div className="ai-advisory-box">
-                  <span className="ai-advisory-bullet">•</span>
-                  <div>
-                    <strong>Need Help?</strong>
-                    <p>You can upload additional documents below anytime to provide new evidence for the assigned officer.</p>
-                  </div>
+                <div className="applicant-help-advisory">
+                  <HelpCircle size={15} className="text-slate-500 flex-shrink-0" />
+                  <p>You can upload additional documents below anytime to provide new evidence for the assigned authority.</p>
                 </div>
               </div>
             </section>
@@ -386,34 +444,39 @@ function GrievanceDetail() {
           {(isResolvedOrClosed || grievance.resolution_notes) && (
             <section className="detail-card authority-resolution-card">
               <div className="detail-card-header">
-                <div>
-                  <h2>Official Redressal Resolution</h2>
-                  <span>Formally recorded by authority</span>
+                <div className="detail-card-title-wrap">
+                  <Scale size={18} className="text-slate-700" />
+                  <div>
+                    <h2>Official Redressal Resolution</h2>
+                    <p>Formally recorded by authority</p>
+                  </div>
                 </div>
                 <StatusBadge status={grievance.status} />
               </div>
 
-              <div className="detail-card-body" style={{ padding: "1.5rem" }}>
+              <div className="detail-card-body">
                 <div className="detail-field full">
-                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b" }}>RESOLUTION REMARKS</span>
-                  <div className="authority-resolution-notes-box" style={{ marginTop: "6px" }}>
-                    {grievance.resolution_notes || "Your grievance has been successfully redressed by the university."}
+                  <span className="detail-field-label">RESOLUTION REMARKS</span>
+                  <div className="authority-resolution-notes-box">
+                    <p className="resolution-notes-body">{grievance.resolution_notes || "Your grievance has been successfully redressed by the university."}</p>
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+                <div className="resolution-meta-row">
                   <div className="detail-field">
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b" }}>RESOLVED BY</span>
-                    <strong style={{ fontSize: "14px", marginTop: "4px", display: "block" }}>
-                      {grievance.resolved_by_name || "Authority"}
-                    </strong>
+                    <span className="detail-field-label">RESOLVED BY</span>
+                    <div className="flex-val-row">
+                      <User size={13} className="text-slate-500" />
+                      <strong className="detail-field-value text-slate-800">{grievance.resolved_by_name || "Authority"}</strong>
+                    </div>
                   </div>
 
                   <div className="detail-field">
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: "#64748b" }}>RESOLVED AT</span>
-                    <strong style={{ fontSize: "14px", marginTop: "4px", display: "block" }}>
-                      {formatDateTime(grievance.resolved_at)}
-                    </strong>
+                    <span className="detail-field-label">RESOLVED AT</span>
+                    <div className="flex-val-row">
+                      <Clock size={13} className="text-slate-500" />
+                      <strong className="detail-field-value text-slate-800">{formatDateTime(grievance.resolved_at)}</strong>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -423,9 +486,12 @@ function GrievanceDetail() {
           {/* ATTACHED DOCUMENTS */}
           <section className="detail-card authority-documents-card">
             <div className="detail-card-header">
-              <div>
-                <h2>Attached Documents & Evidence</h2>
-                <p>Supporting files submitted by you or uploaded by university authorities.</p>
+              <div className="detail-card-title-wrap">
+                <Paperclip size={18} className="text-slate-700" />
+                <div>
+                  <h2>Attached Documents & Evidence</h2>
+                  <p>Supporting files submitted by you or uploaded by university authorities</p>
+                </div>
               </div>
 
               <div>
@@ -442,20 +508,26 @@ function GrievanceDetail() {
                   className="authority-doc-upload-btn"
                   style={{ cursor: uploadingDoc ? "not-allowed" : "pointer" }}
                 >
-                  {uploadingDoc ? "Uploading..." : "+ Upload Additional File"}
+                  <Upload size={14} />
+                  <span>{uploadingDoc ? "Uploading..." : "Upload Additional File"}</span>
                 </label>
               </div>
             </div>
 
-            <div style={{ padding: "1.5rem" }}>
+            <div className="detail-card-body">
               <div className="authority-documents-list">
                 {(!grievance.documents || grievance.documents.length === 0) ? (
-                  <div className="authority-doc-empty">No documents attached to this grievance.</div>
+                  <div className="authority-doc-empty">
+                    <FolderOpen size={32} className="text-slate-300 mb-2" />
+                    <p>No supporting documents have been attached to this grievance yet.</p>
+                  </div>
                 ) : (
                   grievance.documents.map((doc) => (
                     <div key={doc.id} className="authority-doc-card">
                       <div className="authority-doc-card-info">
-                        <span className="authority-doc-icon">{doc.file_name.endsWith(".pdf") ? "📄" : "📎"}</span>
+                        <div className="authority-doc-icon-wrap">
+                          <FileText size={18} className="text-slate-600" />
+                        </div>
                         <div>
                           <strong className="authority-doc-name">{doc.file_name}</strong>
                           <div className="authority-doc-meta">
@@ -473,7 +545,8 @@ function GrievanceDetail() {
                         onClick={() => handleDocumentDownload(doc)}
                         title="Download file"
                       >
-                        Download ⬇
+                        <Download size={14} />
+                        <span>Download</span>
                       </button>
                     </div>
                   ))
@@ -485,21 +558,43 @@ function GrievanceDetail() {
           {/* TIMELINE / TRACKING HISTORY */}
           <section className="detail-card timeline-card">
             <div className="detail-card-header">
-              <h2>Redressal Progress Timeline</h2>
-              <span>{timelineItems.length} milestone(s)</span>
+              <div className="detail-card-title-wrap">
+                <History size={18} className="text-slate-700" />
+                <div>
+                  <h2>Redressal Progress Timeline</h2>
+                  <p>Immutable milestone and event progression record</p>
+                </div>
+              </div>
+              <span className="timeline-event-count-badge">{timelineItems.length} Milestones</span>
             </div>
 
             <div className="timeline-body">
               {timelineItems.length === 0 ? (
-                <div style={{ padding: "20px", color: "#64748b", textAlign: "center" }}>No timeline events recorded yet.</div>
+                <div className="timeline-empty-state">
+                  <Clock size={28} className="text-slate-300 mb-2" />
+                  <p>No timeline events recorded yet.</p>
+                </div>
               ) : (
                 timelineItems.map((event, index) => (
                   <div className="timeline-item" key={event.id || index}>
-                    <div className="timeline-marker">✓</div>
+                    <div className="timeline-marker">
+                      <span className="timeline-marker-dot" />
+                    </div>
                     <div className="timeline-content">
-                      <strong>{formatStatus(event.new_status || event.status)}</strong>
-                      <p>{event.reason || event.description || "Status updated"}</p>
-                      <span>{formatDateTime(event.created_at || event.date)}</span>
+                      <div className="timeline-header-row">
+                        <strong className="timeline-status-tag">{formatStatus(event.status || event.new_status)}</strong>
+                        <span className="timeline-timestamp">
+                          <Clock size={12} />
+                          <span>{formatDateTime(event.created_at || event.date)}</span>
+                        </span>
+                      </div>
+                      <p className="timeline-desc">{event.reason || event.description || "Status updated"}</p>
+                      {event.actor_name && (
+                        <div className="timeline-actor">
+                          <User size={12} />
+                          <span>Action by: {event.actor_name}{event.actor_role ? ` (${formatStatus(event.actor_role)})` : ""}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))

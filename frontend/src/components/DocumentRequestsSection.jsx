@@ -1,5 +1,17 @@
 import { useState } from "react";
 import {
+  FolderOpen,
+  AlertCircle,
+  CheckCircle2,
+  Paperclip,
+  Eye,
+  Download,
+  Upload,
+  XCircle,
+  Clock,
+  AlertTriangle,
+} from "lucide-react";
+import {
   uploadRequestedDocument,
   reviewRequestedDocument,
 } from "../services/documentRequestService";
@@ -123,14 +135,14 @@ export default function DocumentRequestsSection({
   const getStatusBadge = (status) => {
     switch (status) {
       case "APPROVED":
-        return { label: "✓ Approved", bg: "#ecfdf5", color: "#065f46", border: "#a7f3d0" };
+        return { label: "Approved", icon: <CheckCircle2 size={12} />, bg: "#ecfdf5", color: "#065f46", border: "#a7f3d0" };
       case "UPLOADED":
-        return { label: "📤 Uploaded (Pending Review)", bg: "#eff6ff", color: "#1e40af", border: "#bfdbfe" };
+        return { label: "Uploaded (Pending Review)", icon: <Upload size={12} />, bg: "#eff6ff", color: "#1e40af", border: "#bfdbfe" };
       case "REJECTED":
-        return { label: "⚠ Re-upload Required", bg: "#fef2f2", color: "#991b1b", border: "#fecaca" };
+        return { label: "Re-upload Required", icon: <AlertTriangle size={12} />, bg: "#fef2f2", color: "#991b1b", border: "#fecaca" };
       case "PENDING":
       default:
-        return { label: "⏳ Action Required", bg: "#fffbeb", color: "#92400e", border: "#fde68a" };
+        return { label: "Action Required", icon: <Clock size={12} />, bg: "#fffbeb", color: "#92400e", border: "#fde68a" };
     }
   };
 
@@ -169,7 +181,7 @@ export default function DocumentRequestsSection({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "1.2rem" }}>📂</span>
+          <FolderOpen size={18} className="text-slate-700" />
           <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "700", color: "var(--text-primary, #0f172a)" }}>
             Requested Supporting Documents
           </h3>
@@ -198,9 +210,13 @@ export default function DocumentRequestsSection({
             borderRadius: "8px",
             fontSize: "0.85rem",
             marginBottom: "14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
           }}
         >
-          ⚠ {error}
+          <AlertCircle size={16} />
+          <span>{error}</span>
         </div>
       )}
 
@@ -214,9 +230,13 @@ export default function DocumentRequestsSection({
             borderRadius: "8px",
             fontSize: "0.85rem",
             marginBottom: "14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
           }}
         >
-          ✓ {successMsg}
+          <CheckCircle2 size={16} />
+          <span>{successMsg}</span>
         </div>
       )}
 
@@ -297,9 +317,13 @@ export default function DocumentRequestsSection({
                     padding: "4px 10px",
                     borderRadius: "20px",
                     whiteSpace: "nowrap",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
                   }}
                 >
-                  {badge.label}
+                  {badge.icon}
+                  <span>{badge.label}</span>
                 </span>
               </div>
 
@@ -362,7 +386,7 @@ export default function DocumentRequestsSection({
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span>📎</span>
+                    <Paperclip size={16} className="text-slate-500" />
                     <div>
                       <div style={{ fontWeight: "600", fontSize: "0.86rem", color: "#0f172a" }}>
                         {req.uploaded_document.file_name}
@@ -383,8 +407,8 @@ export default function DocumentRequestsSection({
                         color: "#ffffff",
                         padding: "6px 14px",
                         borderRadius: "6px",
-                        background: "#5b1021",
-                        border: "1px solid #4a0c1a",
+                        background: "#881337",
+                        border: "1px solid #70162a",
                         cursor: "pointer",
                         display: "inline-flex",
                         alignItems: "center",
@@ -393,7 +417,8 @@ export default function DocumentRequestsSection({
                         transition: "all 0.2s ease",
                       }}
                     >
-                      👁 View Document
+                      <Eye size={13} />
+                      <span>View Document</span>
                     </button>
 
                     <button
@@ -403,7 +428,7 @@ export default function DocumentRequestsSection({
                       style={{
                         fontSize: "0.82rem",
                         fontWeight: "600",
-                        color: "#5b1021",
+                        color: "#881337",
                         padding: "6px 12px",
                         borderRadius: "6px",
                         background: "#faf8f5",
@@ -416,7 +441,8 @@ export default function DocumentRequestsSection({
                       }}
                       title="Download copy"
                     >
-                      {downloadingId === req.uploaded_document.id ? "⏳..." : "⬇ Download"}
+                      <Download size={13} />
+                      <span>{downloadingId === req.uploaded_document.id ? "Downloading..." : "Download"}</span>
                     </button>
                   </div>
                 </div>
@@ -430,7 +456,7 @@ export default function DocumentRequestsSection({
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "6px",
-                      background: "#5b1021",
+                      background: "#881337",
                       color: "#ffffff",
                       padding: "8px 16px",
                       borderRadius: "6px",
@@ -440,7 +466,8 @@ export default function DocumentRequestsSection({
                       boxShadow: "0 1px 3px rgba(91, 16, 33, 0.2)",
                     }}
                   >
-                    <span>{uploadingId === req.id ? "Uploading..." : "📤 Choose File & Upload"}</span>
+                    <Upload size={14} />
+                    <span>{uploadingId === req.id ? "Uploading..." : "Choose File & Upload"}</span>
                     <input
                       type="file"
                       disabled={uploadingId === req.id}
@@ -478,7 +505,8 @@ export default function DocumentRequestsSection({
                       boxShadow: "0 1px 3px rgba(5, 150, 105, 0.3)",
                     }}
                   >
-                    {reviewingId === req.id ? "Verifying..." : "✓ Verify & Approve Document"}
+                    <CheckCircle2 size={14} />
+                    <span>{reviewingId === req.id ? "Verifying..." : "Verify & Approve Document"}</span>
                   </button>
 
                   <button
@@ -499,7 +527,8 @@ export default function DocumentRequestsSection({
                       gap: "5px",
                     }}
                   >
-                    ✕ Request Re-upload
+                    <XCircle size={14} />
+                    <span>Request Re-upload</span>
                   </button>
                 </div>
               )}

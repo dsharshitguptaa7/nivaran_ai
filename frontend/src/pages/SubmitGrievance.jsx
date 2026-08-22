@@ -1,5 +1,26 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  FilePlus,
+  Paperclip,
+  Upload,
+  FileText,
+  Trash2,
+  Send,
+  CheckCircle2,
+  AlertCircle,
+  ShieldCheck,
+  ClipboardList,
+  FolderOpen,
+  UserCheck,
+  FileCheck,
+  LayoutDashboard,
+  ListOrdered,
+  Info,
+  X,
+  Lock,
+} from "lucide-react";
 
 import { createGrievance } from "../services/grievanceService";
 import { uploadDocument } from "../services/documentService";
@@ -49,12 +70,12 @@ function SubmitGrievance() {
     setStatusMessage("");
 
     if (title.trim().length < 5) {
-      setError("Title must contain at least 5 characters.");
+      setError("Grievance title must contain at least 5 characters.");
       return;
     }
 
     if (description.trim().length < 20) {
-      setError("Description must contain at least 20 characters.");
+      setError("Detailed description must contain at least 20 characters.");
       return;
     }
 
@@ -93,9 +114,9 @@ function SubmitGrievance() {
   };
 
   const navItems = [
-    { label: "Dashboard", path: "/dashboard", icon: "⌂" },
-    { label: "Submit Grievance", path: "/dashboard/submit", icon: "✎", active: true },
-    { label: "My Grievances", path: "/dashboard/grievances", icon: "≡" },
+    { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={16} /> },
+    { label: "Submit Grievance", path: "/dashboard/submit", icon: <FilePlus size={16} />, active: true },
+    { label: "My Grievances", path: "/dashboard/grievances", icon: <ListOrdered size={16} /> },
   ];
 
   return (
@@ -120,188 +141,289 @@ function SubmitGrievance() {
 
         {/* MAIN CONTENT */}
         <main className="authority-main">
-          {/* BREADCRUMB */}
-          <Link to="/dashboard" className="detail-back-link">
-            ← Back to Dashboard
-          </Link>
+          {/* COMPACT BREADCRUMB */}
+          <div className="detail-navigation-bar">
+            <Link to="/dashboard/grievances" className="detail-back-link">
+              <ArrowLeft size={15} />
+              <span>Back to My Grievances</span>
+            </Link>
+          </div>
 
           {/* PAGE HEADER */}
-          <section className="authority-page-header">
-            <div>
-              <div className="authority-page-eyebrow">NEW COMPLAINT / GRIEVANCE REGISTRATION</div>
-              <h1>Submit a Grievance</h1>
-              <p>Submit your academic, administrative, hostel, or examination concerns for autonomous AI classification and authority redressal.</p>
+          <header className="detail-page-header submit-page-header">
+            <div className="detail-header-main">
+              <div className="detail-header-meta-row">
+                <span className="submit-eyebrow-badge">GRIEVANCE REGISTRATION</span>
+                <span className="meta-divider">•</span>
+                <span className="submit-meta-note">CSJMU Redressal Portal</span>
+              </div>
+              <h1 className="detail-case-title">Submit a Grievance</h1>
+              <p className="submit-header-description">
+                Submit your concern with relevant details and supporting documents. Your grievance will be securely registered, reviewed, and routed to the appropriate university authority.
+              </p>
             </div>
-          </section>
+          </header>
 
-          {/* NOTIFICATION */}
+          {/* NOTIFICATION MESSAGES */}
           {statusMessage && (
             <div className="authority-doc-success-msg" style={{ marginBottom: "20px" }}>
-              ✓ {statusMessage}
+              <CheckCircle2 size={16} />
+              <span>{statusMessage}</span>
             </div>
           )}
 
           {error && (
             <div className="dashboard-error" style={{ marginBottom: "20px" }}>
-              <span>!</span>
+              <AlertCircle size={16} />
               <p>{error}</p>
             </div>
           )}
 
-          {/* 2-COLUMN GRID (FORM + AI INFO) */}
-          <div className="detail-top-grid">
-            {/* SUBMISSION FORM CARD */}
-            <section className="detail-card">
+          {/* 2-COLUMN GRID (FORM 65% + PROCESS/INFO 35%) */}
+          <div className="detail-top-grid submit-layout-grid">
+            {/* LEFT: SUBMISSION FORM CARD */}
+            <section className="detail-card submit-form-card">
               <div className="detail-card-header">
-                <h2>Grievance Particulars</h2>
-                <span>All fields required</span>
+                <div className="detail-card-title-wrap">
+                  <FilePlus size={18} className="text-slate-700" />
+                  <div>
+                    <h2>Grievance Details & Evidence</h2>
+                    <p>Official complaint registration form</p>
+                  </div>
+                </div>
+                <span className="form-required-pill">
+                  <span className="required-star">*</span> Required fields
+                </span>
               </div>
 
-              <form onSubmit={handleSubmit} style={{ padding: "1.5rem" }}>
-                <div className="form-group">
-                  <label htmlFor="title">Grievance Title / Subject *</label>
-                  <input
-                    id="title"
-                    type="text"
-                    placeholder="E.g., Discrepancy in Semester 4 Grade Card Marks"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    disabled={loading}
-                    required
-                  />
-                  <small style={{ color: "#64748b", fontSize: "11px", marginTop: "4px", display: "block" }}>
-                    Minimum 5 characters. Be specific and concise.
-                  </small>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="description">Detailed Description *</label>
-                  <textarea
-                    id="description"
-                    rows={6}
-                    placeholder="Provide detailed information regarding the issue, roll number, course, dates, and previous attempts to resolve..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    disabled={loading}
-                    required
-                  />
-                  <small style={{ color: "#64748b", fontSize: "11px", marginTop: "4px", display: "block" }}>
-                    Minimum 20 characters. Include all relevant facts.
-                  </small>
-                </div>
-
-                {/* FILE ATTACHMENTS */}
-                <div className="form-group">
-                  <label>Supporting Documents & Evidence (Optional)</label>
-                  <div className="applicant-file-dropzone" style={{ border: "2px dashed #cbd5e1", borderRadius: "10px", padding: "20px", textAlign: "center", background: "#f8fafc", marginTop: "6px" }}>
-                    <input
-                      id="applicant-file-input"
-                      type="file"
-                      multiple
-                      accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt"
-                      onChange={handleFileChange}
-                      disabled={loading}
-                      style={{ display: "none" }}
-                    />
-                    <label htmlFor="applicant-file-input" style={{ cursor: "pointer", display: "block" }}>
-                      <span style={{ fontSize: "28px", display: "block", marginBottom: "6px" }}>📎</span>
-                      <strong style={{ color: "var(--primary, #70162a)" }}>Click to browse files</strong> or drag and drop
-                      <p style={{ fontSize: "11px", color: "#64748b", margin: "4px 0 0" }}>PDF, PNG, JPG, DOCX (Max 20MB per file)</p>
-                    </label>
+              <form onSubmit={handleSubmit} className="submit-grievance-form">
+                {/* SECTION 1: PARTICULARS */}
+                <div className="form-section-block">
+                  <div className="form-section-header">
+                    <span className="form-section-number">01</span>
+                    <div>
+                      <h3 className="form-section-title">Grievance Particulars</h3>
+                      <p className="form-section-subtitle">Specify the subject and detailed explanation of your concern</p>
+                    </div>
                   </div>
 
-                  {files.length > 0 && (
-                    <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                      {files.map((file, idx) => (
-                        <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "12px" }}>
-                          <div>
-                            <strong>{file.name}</strong> <span style={{ color: "#64748b" }}>({(file.size / 1024).toFixed(1)} KB)</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveFile(idx)}
-                            style={{ background: "transparent", border: "none", color: "#dc2626", cursor: "pointer", fontWeight: 700 }}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <div className="form-group submit-form-group">
+                    <label htmlFor="title" className="submit-field-label">
+                      Grievance Title / Subject <span className="field-required-mark">*</span>
+                    </label>
+                    <input
+                      id="title"
+                      type="text"
+                      placeholder="e.g., Discrepancy in Semester 4 Grade Card Marks or Fellowship Disbursal Delay"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      disabled={loading}
+                      required
+                      className="form-control submit-input"
+                    />
+                    <span className="submit-helper-text">
+                      Briefly describe the issue in a few words (minimum 5 characters).
+                    </span>
+                  </div>
+
+                  <div className="form-group submit-form-group">
+                    <label htmlFor="description" className="submit-field-label">
+                      Detailed Description <span className="field-required-mark">*</span>
+                    </label>
+                    <textarea
+                      id="description"
+                      rows={6}
+                      placeholder="Provide comprehensive details regarding your grievance, including registration/roll number, relevant dates, previous communication, and specific redressal requested..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      disabled={loading}
+                      required
+                      className="form-control submit-textarea"
+                    />
+                    <span className="submit-helper-text">
+                      Include relevant dates, academic details, previous communication, and any information that may help the authority review your case (minimum 20 characters).
+                    </span>
+                  </div>
                 </div>
 
-                <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "24px", paddingTop: "16px", borderTop: "1px solid #f1f5f9" }}>
-                  <Link to="/dashboard" className="secondary-button">
+                {/* SECTION 2: SUPPORTING DOCUMENTS */}
+                <div className="form-section-block">
+                  <div className="form-section-header">
+                    <span className="form-section-number">02</span>
+                    <div>
+                      <h3 className="form-section-title">Supporting Documents</h3>
+                      <p className="form-section-subtitle">Attach official letters, receipts, marksheets, or evidence</p>
+                    </div>
+                  </div>
+
+                  <div className="form-group submit-form-group">
+                    <div className="submit-dropzone-container">
+                      <input
+                        id="applicant-file-input"
+                        type="file"
+                        multiple
+                        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt"
+                        onChange={handleFileChange}
+                        disabled={loading}
+                        style={{ display: "none" }}
+                      />
+                      <label htmlFor="applicant-file-input" className="submit-dropzone-label">
+                        <div className="dropzone-icon-circle">
+                          <Upload size={22} className="text-slate-600" />
+                        </div>
+                        <div className="dropzone-text-block">
+                          <strong className="dropzone-main-text">
+                            Click to browse files <span className="text-slate-500 font-normal">or drag and drop</span>
+                          </strong>
+                          <p className="dropzone-sub-text">
+                            Supported formats: PDF, PNG, JPG, DOCX, TXT • Max 20MB per file
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="browse-files-btn"
+                          onClick={() => document.getElementById("applicant-file-input")?.click()}
+                          disabled={loading}
+                        >
+                          <Paperclip size={13} />
+                          <span>Browse Files</span>
+                        </button>
+                      </label>
+                    </div>
+
+                    {/* SELECTED FILES LIST */}
+                    {files.length > 0 && (
+                      <div className="submit-selected-files-list">
+                        <span className="selected-files-header-label">
+                          Selected Attachments ({files.length}):
+                        </span>
+                        {files.map((file, idx) => (
+                          <div key={idx} className="submit-file-item-card">
+                            <div className="submit-file-info-group">
+                              <div className="submit-file-icon-box">
+                                <FileText size={16} className="text-slate-600" />
+                              </div>
+                              <div className="submit-file-meta-block">
+                                <strong className="submit-file-name">{file.name}</strong>
+                                <span className="submit-file-size">{(file.size / 1024).toFixed(1)} KB</span>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFile(idx)}
+                              className="submit-file-remove-btn"
+                              title="Remove file"
+                              aria-label={`Remove ${file.name}`}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* FORM ACTIONS */}
+                <div className="submit-form-actions-row">
+                  <Link to="/dashboard/grievances" className="submit-cancel-btn">
                     Cancel
                   </Link>
 
                   <button
                     type="submit"
-                    className="authority-primary-button"
+                    className="submit-primary-btn"
                     disabled={loading || !title.trim() || !description.trim()}
                   >
-                    {loading ? "Submitting Grievance..." : "Submit Grievance →"}
+                    <Send size={15} />
+                    <span>{loading ? "Registering Grievance..." : "Submit Grievance"}</span>
                   </button>
                 </div>
               </form>
             </section>
 
-            {/* AI SYSTEM GUIDANCE CARD */}
-            <section className="detail-card ai-analysis-card">
-              <div className="detail-card-header">
-                <div className="ai-card-title">
-                  <div className="ai-detail-icon">AI</div>
-                  <div>
-                    <h2>Autonomous Redressal Pipeline</h2>
-                    <span className="ai-model-tag">CSJMU Core Engine</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="detail-card-body" style={{ padding: "1.5rem" }}>
-                <div className="applicant-ai-pipeline-steps">
-                  <div className="applicant-step-item">
-                    <div className="applicant-step-badge">1</div>
+            {/* RIGHT: WHAT HAPPENS NEXT & SECURITY INFORMATION PANEL */}
+            <div className="submit-side-panel">
+              {/* WHAT HAPPENS NEXT */}
+              <section className="detail-card submit-process-card">
+                <div className="detail-card-header">
+                  <div className="detail-card-title-wrap">
+                    <ClipboardList size={18} className="text-slate-700" />
                     <div>
-                      <strong>Intake & Instant Tracking ID</strong>
-                      <p>Your grievance is logged and assigned a unique Tracking ID.</p>
-                    </div>
-                  </div>
-
-                  <div className="applicant-step-item">
-                    <div className="applicant-step-badge">2</div>
-                    <div>
-                      <strong>BERT Natural Language Classification</strong>
-                      <p>AI scans and extracts category, priority, and department routing.</p>
-                    </div>
-                  </div>
-
-                  <div className="applicant-step-item">
-                    <div className="applicant-step-badge">3</div>
-                    <div>
-                      <strong>Central Review & Officer Assignment</strong>
-                      <p>Manager validates classification and dispatches to Assistant Dean.</p>
-                    </div>
-                  </div>
-
-                  <div className="applicant-step-item">
-                    <div className="applicant-step-badge">4</div>
-                    <div>
-                      <strong>Resolution & Formal Closure</strong>
-                      <p>Authority takes action, uploads resolution proofs, and concludes case.</p>
+                      <h2>What Happens Next?</h2>
+                      <p>Institutional Redressal Workflow</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="ai-advisory-box" style={{ marginTop: "20px" }}>
-                  <span className="ai-advisory-bullet">•</span>
-                  <div>
-                    <strong>Confidentiality Notice</strong>
-                    <p>All grievance records are securely handled according to CSJMU university grievance redressal statutes.</p>
+                <div className="detail-card-body submit-process-body">
+                  <div className="institutional-step-list">
+                    <div className="institutional-step-item">
+                      <div className="step-icon-wrap">
+                        <ClipboardList size={16} />
+                      </div>
+                      <div className="step-content-wrap">
+                        <strong className="step-title">1. Grievance Registered</strong>
+                        <p className="step-desc">
+                          Your submission is securely logged and assigned a unique tracking ID (e.g. GRV-XXXXX).
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="institutional-step-item">
+                      <div className="step-icon-wrap">
+                        <FolderOpen size={16} />
+                      </div>
+                      <div className="step-content-wrap">
+                        <strong className="step-title">2. Case Review & Routing</strong>
+                        <p className="step-desc">
+                          Your grievance is categorized and routed to the appropriate university authority.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="institutional-step-item">
+                      <div className="step-icon-wrap">
+                        <UserCheck size={16} />
+                      </div>
+                      <div className="step-content-wrap">
+                        <strong className="step-title">3. Authority Examination</strong>
+                        <p className="step-desc">
+                          The designated authority reviews your case and may request additional supporting evidence if required.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="institutional-step-item">
+                      <div className="step-icon-wrap">
+                        <FileCheck size={16} />
+                      </div>
+                      <div className="step-content-wrap">
+                        <strong className="step-title">4. Resolution & Formal Closure</strong>
+                        <p className="step-desc">
+                          Official redressal notes are recorded and you are notified upon resolution and final verification.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
+
+              {/* CONFIDENTIALITY & SECURITY NOTICE */}
+              <section className="detail-card submit-security-card">
+                <div className="security-notice-body">
+                  <div className="security-icon-circle">
+                    <ShieldCheck size={20} className="text-emerald-700" />
+                  </div>
+                  <div className="security-text-wrap">
+                    <h4 className="security-title">Your Information Is Protected</h4>
+                    <p className="security-desc">
+                      Your grievance details and supporting documents are handled with strict institutional confidentiality and are accessible only to authorized university personnel involved in the redressal process.
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
         </main>
       </div>

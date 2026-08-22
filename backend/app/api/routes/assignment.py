@@ -1,3 +1,5 @@
+import uuid
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -8,21 +10,18 @@ from app.db.database import get_db
 
 from app.models.assignment import Assignment
 from app.models.grievance import Grievance
-from app.models.user import User
-
-from datetime import datetime, timezone
-
+from app.models.user import User, UserRole
 from app.models.enums import GrievanceStatus
-from app.models.user import UserRole
+from app.models.grievance_status_history import GrievanceStatusHistory, HistoryActorType
 from app.models.audit_log import AuditLog
+from app.models.notification import NotificationType
 from app.schemas.assignment import AssignmentCreate
 from app.services.authority_routing import (
     get_expected_assistant_dean,
     get_expected_forward_target,
+    get_next_authority_for_grievance,
 )
 from app.services.grievance_workflow import change_grievance_status
-
-from app.models.notification import NotificationType
 from app.services.notification_service import create_notification
 
 router = APIRouter(
@@ -116,62 +115,7 @@ def assign_grievance(
         )
 
     # --------------------------------------------------
-    # 2. Resolve target assignee based on authority flow
-    # --------------------------------------------------
-
-    if current_user.role == UserRole.MANAGER:
-        expected_assignee = get_expected_assistant_dean(
-            db=db,
-            grievance=grievance,
-        )
-    elif current_user.role == UserRole.ASSISTANT_DEAN:
-        expected_assignee = get_expected_forward_target(
-            db=db,
-            grievance=grievance,
-        )
-    elif current_user.role == UserRole.ASSOCIATE_DEAN:
-        expected_assignee = db.scalar(
-            select(User).where(
-                User.role == UserRole.DEAN,
-                User.is_active.is_(True),
-            )
-        )
-        if expected_assignee is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Dean authority is not configured or inactive.",
-            )
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"{current_user.role.value} cannot forward grievances.",
-        )
-
-    if assignment_data.assigned_to is not None:
-        assignee = db.scalar(
-            select(User).where(
-                User.id == assignment_data.assigned_to,
-                User.is_active.is_(True),
-            )
-        )
-        if assignee is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Assigned user not found or inactive",
-            )
-        if assignee.id != expected_assignee.id and assignee.role != expected_assignee.role:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=(
-                    f"{current_user.role.value} can only forward to "
-                    f"{expected_assignee.full_name} ({expected_assignee.role.value})."
-                ),
-            )
-    else:
-        assignee = expected_assignee
-
-    # --------------------------------------------------
-    # 4. Check existing active assignment
+    # 2. Check existing active assignment
     # --------------------------------------------------
 
     existing_assignment = db.scalar(
@@ -186,22 +130,65 @@ def assign_grievance(
     if (
         existing_assignment is not None
         and existing_assignment.assigned_to != current_user.id
+        and current_user.role != UserRole.MANAGER
     ):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Grievance is already assigned.",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only forward grievances currently assigned to you.",
         )
 
     # --------------------------------------------------
-    # 5. Validate grievance status
+    # 3. Resolve target assignee based on dynamic authority workflow
+    # --------------------------------------------------
+
+    expected_assignee = get_next_authority_for_grievance(
+        db=db,
+        grievance=grievance,
+        current_user=current_user,
+    )
+
+    if expected_assignee is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Forwarding is not available because this grievance has reached its final mapped authority.",
+        )
+
+    if assignment_data.assigned_to is not None:
+        assignee = db.scalar(
+            select(User).where(
+                User.id == assignment_data.assigned_to,
+                User.is_active.is_(True),
+            )
+        )
+        if assignee is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Assigned user not found or inactive",
+            )
+        if assignee.id != expected_assignee.id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"{current_user.role.value} can only forward to "
+                    f"{expected_assignee.full_name} ({expected_assignee.role.value})."
+                ),
+            )
+    else:
+        assignee = expected_assignee
+
+    # --------------------------------------------------
+    # 4. Validate grievance status
     # --------------------------------------------------
 
     allowed_statuses = {
         GrievanceStatus.ASSIGNED,
+        GrievanceStatus.IN_PROGRESS,
         GrievanceStatus.ESCALATED,
     } if is_forward else {
         GrievanceStatus.PENDING_REVIEW,
         GrievanceStatus.ESCALATED,
+        GrievanceStatus.SUBMITTED,
+        GrievanceStatus.AI_PROCESSING,
     }
 
     if grievance.status not in allowed_statuses:
@@ -219,7 +206,7 @@ def assign_grievance(
         db.add(existing_assignment)
 
     # --------------------------------------------------
-    # 6. Create assignment
+    # 5. Create assignment
     # --------------------------------------------------
 
     assignment = Assignment(
@@ -235,39 +222,75 @@ def assign_grievance(
     db.add(grievance)
 
     # --------------------------------------------------
-    # 7. Change grievance status
+    # 6. Change grievance status & record history
     # --------------------------------------------------
 
-    if grievance.status != GrievanceStatus.ASSIGNED:
-        change_grievance_status(
-            db=db,
-            grievance=grievance,
+    if is_forward:
+        role_label = assignee.role.value.replace("_", " ")
+        forward_reason = (
+            f"Forwarded by {current_user.full_name} to {assignee.full_name}"
+            f" ({role_label})"
+        )
+        if assignment_data.remarks and assignment_data.remarks.strip():
+            forward_reason += f": {assignment_data.remarks.strip()}"
+
+        history_entry = GrievanceStatusHistory(
+            grievance_id=grievance.id,
+            previous_status=grievance.status,
             new_status=GrievanceStatus.ASSIGNED,
-            changed_by=current_user,
-            reason=(
-                f"Grievance assigned to "
-                f"{assignee.full_name}."
+            changed_by=current_user.id,
+            actor_type=HistoryActorType.USER,
+            reason=forward_reason,
+        )
+        db.add(history_entry)
+        grievance.status = GrievanceStatus.ASSIGNED
+        db.add(grievance)
+
+        # Audit log
+        audit_log = AuditLog(
+            user_id=current_user.id,
+            grievance_id=grievance.id,
+            action="GRIEVANCE_FORWARDED",
+            entity_type="ASSIGNMENT",
+            entity_id=assignment.id,
+            description=(
+                f"Forwarded by {current_user.full_name} to "
+                f"{assignee.full_name} ({assignee.role.value})."
+                + (f" Remarks: {assignment_data.remarks}" if assignment_data.remarks else "")
             ),
         )
+        db.add(audit_log)
+    else:
+        if grievance.status != GrievanceStatus.ASSIGNED:
+            change_grievance_status(
+                db=db,
+                grievance=grievance,
+                new_status=GrievanceStatus.ASSIGNED,
+                changed_by=current_user,
+                reason=(
+                    f"Grievance assigned to "
+                    f"{assignee.full_name}."
+                ),
+            )
+
+        # Audit log
+        audit_log = AuditLog(
+            user_id=current_user.id,
+            grievance_id=grievance.id,
+            action="GRIEVANCE_ASSIGNED",
+            entity_type="ASSIGNMENT",
+            entity_id=assignment.id,
+            description=(
+                f"Grievance assigned to "
+                f"{assignee.full_name} "
+                f"({assignee.role.value})."
+            ),
+        )
+        db.add(audit_log)
 
     # --------------------------------------------------
-    # 8. Audit log
+    # 7. Notifications
     # --------------------------------------------------
-
-    audit_log = AuditLog(
-        user_id=current_user.id,
-        grievance_id=grievance.id,
-        action="GRIEVANCE_ASSIGNED",
-        entity_type="ASSIGNMENT",
-        entity_id=assignment.id,
-        description=(
-            f"Grievance assigned to "
-            f"{assignee.full_name} "
-            f"({assignee.role.value})."
-        ),
-    )
-
-    db.add(audit_log)
 
     if is_forward:
         role_str = assignee.role.value.replace("_", " ")
@@ -285,7 +308,7 @@ def assign_grievance(
                 f"{current_user.full_name} ({curr_role_str})."
             ),
         )
-        # Notify the applicant
+        # Notify the applicant (In-App status update)
         create_notification(
             db=db,
             user_id=grievance.applicant_id,
@@ -311,7 +334,7 @@ def assign_grievance(
         )
 
     # --------------------------------------------------
-    # 9. Commit
+    # 8. Commit
     # --------------------------------------------------
 
     db.commit()

@@ -43,6 +43,7 @@ from app.schemas.grievance import (
     GrievanceResolveRequest,
     GrievanceCloseRequest,
     GrievanceReopenRequest,
+    GrievanceHistoryItemResponse,
 )
 from app.schemas.ai_processing import AIProcessingResponse
 from app.schemas.escalation import EscalationRequest
@@ -325,6 +326,7 @@ def get_grievance(
 
 @router.get(
     "/{grievance_id}/history",
+    response_model=list[GrievanceHistoryItemResponse],
 )
 def get_grievance_history(
     grievance_id: str,
@@ -356,7 +358,7 @@ def get_grievance_history(
             detail="Grievance not found",
         )
 
-    history = db.scalars(
+    history_records = db.scalars(
         select(GrievanceStatusHistory)
         .where(
             GrievanceStatusHistory.grievance_id == grievance.id
@@ -366,7 +368,46 @@ def get_grievance_history(
         )
     ).all()
 
-    return history
+    # Preload user mapping for actor names
+    user_ids = {h.changed_by for h in history_records if h.changed_by is not None}
+    users_map = {}
+    if user_ids:
+        users = db.scalars(select(User).where(User.id.in_(user_ids))).all()
+        users_map = {u.id: u for u in users}
+
+    result = []
+    for h in history_records:
+        actor = users_map.get(h.changed_by)
+        actor_name = actor.full_name if actor else None
+        actor_role = actor.role.value if actor else None
+
+        reason_str = h.reason or ""
+        is_forward_event = (
+            reason_str.startswith("Forwarded by")
+            or "forwarded to" in reason_str.lower()
+            or reason_str.lower().startswith("grievance forwarded")
+        )
+
+        display_status = "FORWARDED" if is_forward_event else h.new_status.value
+        event_type = "FORWARDED" if is_forward_event else h.new_status.value
+
+        result.append(
+            GrievanceHistoryItemResponse(
+                id=h.id,
+                grievance_id=h.grievance_id,
+                previous_status=h.previous_status,
+                new_status=h.new_status,
+                status=display_status,
+                event_type=event_type,
+                changed_by=h.changed_by,
+                actor_name=actor_name,
+                actor_role=actor_role,
+                reason=h.reason,
+                created_at=h.created_at,
+            )
+        )
+
+    return result
 
 
 # ============================================================

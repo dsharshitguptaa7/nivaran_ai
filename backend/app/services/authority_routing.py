@@ -7,6 +7,7 @@ from app.models.category import (
     CategoryRoutingType,
 )
 from app.models.grievance import Grievance
+from app.models.enums import GrievanceStatus
 from app.models.subject import Subject
 from app.models.subject_cluster import SubjectCluster
 from app.models.grievance_cluster import GrievanceCluster
@@ -310,98 +311,41 @@ def get_expected_forward_target(
         ),
     )
 
-def get_routing_response(
+def get_next_authority_for_grievance(
     db: Session,
     grievance: Grievance,
     current_user: User,
-) -> dict:
-
+) -> User | None:
     """
-    Determine the routing target and action capabilities based on
-    the current authority level.
+    Dynamically determine the next authority in the grievance workflow.
+    Returns None if the grievance has reached its terminal resolving authority
+    or if forwarding is not applicable.
     """
+    # Resolved or Closed grievances cannot be forwarded further
+    if grievance.status in {GrievanceStatus.RESOLVED, GrievanceStatus.CLOSED}:
+        return None
 
-    # ========================================================
-    # MANAGER → ASSISTANT DEAN
-    # ========================================================
-
+    # Manager review step -> first authority (Subject Assistant Dean)
     if current_user.role == UserRole.MANAGER:
+        if grievance.status in {
+            GrievanceStatus.SUBMITTED,
+            GrievanceStatus.AI_PROCESSING,
+            GrievanceStatus.PENDING_REVIEW,
+            GrievanceStatus.ESCALATED,
+        }:
+            try:
+                return get_expected_assistant_dean(db=db, grievance=grievance)
+            except Exception:
+                return None
+        return None
 
-        assistant_dean = get_expected_assistant_dean(
-            db=db,
-            grievance=grievance,
-        )
-
-        return {
-            "can_forward": True,
-            "can_resolve": True,
-            "can_close": True,
-            "can_escalate": False,
-            "routing_type": "SUBJECT_ASSISTANT_DEAN",
-            "next_authority_id": assistant_dean.id,
-            "next_authority_role": UserRole.ASSISTANT_DEAN.value,
-            "next_authority_name": assistant_dean.full_name,
-        }
-
-    # ========================================================
-    # DEAN
-    # ========================================================
-
+    # Dean is executive terminal
     if current_user.role == UserRole.DEAN:
-        return {
-            "can_forward": False,
-            "can_resolve": True,
-            "can_close": True,
-            "can_escalate": False,
-            "routing_type": None,
-            "next_authority_id": None,
-            "next_authority_role": None,
-            "next_authority_name": None,
-        }
+        return None
 
-    # ========================================================
-    # ASSOCIATE DEAN
-    # ========================================================
-
-    if current_user.role == UserRole.ASSOCIATE_DEAN:
-        # Associate Dean can forward/escalate to Dean or resolve directly
-        dean = db.scalar(
-            select(User).where(
-                User.role == UserRole.DEAN,
-                User.is_active.is_(True),
-            )
-        )
-
-        return {
-            "can_forward": True,
-            "can_resolve": True,
-            "can_close": False,
-            "can_escalate": True,
-            "routing_type": "DEAN",
-            "next_authority_id": dean.id if dean else None,
-            "next_authority_role": UserRole.DEAN.value,
-            "next_authority_name": dean.full_name if dean else "Dean",
-        }
-
-    # ========================================================
-    # NO FINAL CATEGORY (for Assistant Dean or other)
-    # ========================================================
-
+    # For Assistant Dean or other assigned authorities:
     if grievance.final_category_id is None:
-        return {
-            "can_forward": False,
-            "can_resolve": True,
-            "can_close": False,
-            "can_escalate": True,
-            "routing_type": None,
-            "next_authority_id": None,
-            "next_authority_role": None,
-            "next_authority_name": None,
-        }
-
-    # ========================================================
-    # GET FINAL CATEGORY
-    # ========================================================
+        return None
 
     category = db.scalar(
         select(Category)
@@ -412,171 +356,107 @@ def get_routing_response(
     )
 
     if category is None:
-        return {
-            "can_forward": False,
-            "can_resolve": True,
-            "can_close": False,
-            "can_escalate": True,
-            "routing_type": None,
-            "next_authority_id": None,
-            "next_authority_role": None,
-            "next_authority_name": None,
+        return None
+
+    # Case 1: SUBJECT_ASSISTANT_DEAN -> Resolved directly by Subject Assistant Dean (Terminal)
+    if category.routing_type == CategoryRoutingType.SUBJECT_ASSISTANT_DEAN:
+        return None
+
+    # Case 2: GRIEVANCE_CLUSTER -> Mapped Associate Dean
+    if category.routing_type == CategoryRoutingType.GRIEVANCE_CLUSTER:
+        try:
+            assoc_dean = get_category_associate_dean(db=db, grievance=grievance)
+            # If current user is already this Associate Dean, terminal!
+            if assoc_dean and assoc_dean.id == current_user.id:
+                return None
+            return assoc_dean
+        except Exception:
+            return None
+
+    # Case 3: FIXED_AUTHORITY -> Specific configured authority (e.g. Dr. Dipesh Kumar Verma)
+    if category.routing_type == CategoryRoutingType.FIXED_AUTHORITY:
+        try:
+            fixed_auth = get_fixed_authority(db=db, grievance=grievance)
+            # If current user is already the fixed authority, terminal!
+            if fixed_auth and fixed_auth.id == current_user.id:
+                return None
+            return fixed_auth
+        except Exception:
+            return None
+
+    return None
+
+
+def get_routing_response(
+    db: Session,
+    grievance: Grievance,
+    current_user: User,
+) -> dict:
+    """
+    Determine the routing target and action capabilities based on
+    the current authority level and grievance workflow mapping.
+    """
+    is_resolved_or_closed = grievance.status in {
+        GrievanceStatus.RESOLVED,
+        GrievanceStatus.CLOSED,
+    }
+
+    # Determine next dynamic authority
+    next_authority = get_next_authority_for_grievance(
+        db=db,
+        grievance=grievance,
+        current_user=current_user,
+    )
+
+    can_forward = next_authority is not None
+
+    # Determine routing type label
+    routing_type_str: str | None = None
+    if current_user.role == UserRole.MANAGER:
+        routing_type_str = "SUBJECT_ASSISTANT_DEAN"
+    elif current_user.role == UserRole.ASSOCIATE_DEAN:
+        routing_type_str = "DEAN"
+    elif grievance.final_category and grievance.final_category.routing_type:
+        routing_type_str = grievance.final_category.routing_type.value
+    elif grievance.category and grievance.category.routing_type:
+        routing_type_str = grievance.category.routing_type.value
+
+    # Determine capability permissions
+    can_resolve = not is_resolved_or_closed
+    can_close = (
+        current_user.role == UserRole.MANAGER
+        and grievance.status in {
+            GrievanceStatus.RESOLVED,
+            GrievanceStatus.PENDING_REVIEW,
+            GrievanceStatus.ASSIGNED,
+            GrievanceStatus.IN_PROGRESS,
         }
-
-    # ========================================================
-    # SUBJECT ASSISTANT DEAN
-    # ========================================================
-
-    if (
-        category.routing_type
-        == CategoryRoutingType.SUBJECT_ASSISTANT_DEAN
-    ):
-        return {
-            "can_forward": False,
-            "can_resolve": True,
-            "can_close": False,
-            "can_escalate": True,
-            "routing_type": category.routing_type.value,
-            "next_authority_id": None,
-            "next_authority_role": None,
-            "next_authority_name": None,
+    )
+    can_escalate = (
+        not is_resolved_or_closed
+        and current_user.role in {
+            UserRole.ASSISTANT_DEAN,
+            UserRole.ASSOCIATE_DEAN,
         }
+    )
 
-    # ========================================================
-    # GRIEVANCE CLUSTER → ASSOCIATE DEAN
-    # ========================================================
-
-    if (
-        category.routing_type
-        == CategoryRoutingType.GRIEVANCE_CLUSTER
-    ):
-
-        if category.grievance_cluster_id is None:
-            return {
-                "can_forward": False,
-                "can_resolve": True,
-                "can_close": False,
-                "can_escalate": True,
-                "routing_type": category.routing_type.value,
-                "next_authority_id": None,
-                "next_authority_role": None,
-                "next_authority_name": None,
-            }
-
-        grievance_cluster = db.scalar(
-            select(GrievanceCluster)
-            .where(
-                GrievanceCluster.id
-                == category.grievance_cluster_id,
-                GrievanceCluster.is_active.is_(True),
-            )
-        )
-
-        if grievance_cluster is None:
-            return {
-                "can_forward": False,
-                "can_resolve": True,
-                "can_close": False,
-                "can_escalate": True,
-                "routing_type": category.routing_type.value,
-                "next_authority_id": None,
-                "next_authority_role": None,
-                "next_authority_name": None,
-            }
-
-        associate_dean = db.scalar(
-            select(User)
-            .where(
-                User.id
-                == grievance_cluster.associate_dean_id,
-                User.role
-                == UserRole.ASSOCIATE_DEAN,
-                User.is_active.is_(True),
-            )
-        )
-
-        if associate_dean is None:
-            return {
-                "can_forward": False,
-                "can_resolve": True,
-                "can_close": False,
-                "can_escalate": True,
-                "routing_type": category.routing_type.value,
-                "next_authority_id": None,
-                "next_authority_role": None,
-                "next_authority_name": None,
-            }
-
-        return {
-            "can_forward": True,
-            "can_resolve": True,
-            "can_close": False,
-            "can_escalate": True,
-            "routing_type": category.routing_type.value,
-            "next_authority_id": associate_dean.id,
-            "next_authority_role": UserRole.ASSOCIATE_DEAN.value,
-            "next_authority_name": associate_dean.full_name,
-        }
-
-    # ========================================================
-    # FIXED AUTHORITY
-    # ========================================================
-
-    if (
-        category.routing_type
-        == CategoryRoutingType.FIXED_AUTHORITY
-    ):
-
-        if category.fixed_authority_id is None:
-            return {
-                "can_forward": False,
-                "can_resolve": True,
-                "can_close": False,
-                "can_escalate": True,
-                "routing_type": category.routing_type.value,
-                "next_authority_id": None,
-                "next_authority_role": None,
-                "next_authority_name": None,
-            }
-
-        authority = db.scalar(
-            select(User)
-            .where(
-                User.id == category.fixed_authority_id,
-                User.is_active.is_(True),
-            )
-        )
-
-        if authority is None:
-            return {
-                "can_forward": False,
-                "can_resolve": True,
-                "can_close": False,
-                "can_escalate": True,
-                "routing_type": category.routing_type.value,
-                "next_authority_id": None,
-                "next_authority_role": None,
-                "next_authority_name": None,
-            }
-
-        return {
-            "can_forward": True,
-            "can_resolve": True,
-            "can_close": False,
-            "can_escalate": True,
-            "routing_type": category.routing_type.value,
-            "next_authority_id": authority.id,
-            "next_authority_role": authority.role.value,
-            "next_authority_name": authority.full_name,
+    next_authority_dict = None
+    if next_authority is not None:
+        next_authority_dict = {
+            "id": next_authority.id,
+            "name": next_authority.full_name,
+            "role": next_authority.role.value,
+            "email": next_authority.email,
         }
 
     return {
-        "can_forward": False,
-        "can_resolve": True,
-        "can_close": False,
-        "can_escalate": True,
-        "routing_type": None,
-        "next_authority_id": None,
-        "next_authority_role": None,
-        "next_authority_name": None,
+        "can_forward": can_forward,
+        "can_resolve": can_resolve,
+        "can_close": can_close,
+        "can_escalate": can_escalate,
+        "routing_type": routing_type_str,
+        "next_authority_id": next_authority.id if next_authority else None,
+        "next_authority_role": next_authority.role.value if next_authority else None,
+        "next_authority_name": next_authority.full_name if next_authority else None,
+        "next_authority": next_authority_dict,
     }

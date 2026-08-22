@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  Inbox,
+  ClipboardCheck,
+  FileCheck,
+  Activity,
+  RefreshCw,
+} from "lucide-react";
 
 import {
   getAllGrievances,
@@ -106,9 +113,9 @@ function ReviewerDashboard() {
   };
 
   const navItems = [
-    { label: "Dashboard", path: "/reviewer", icon: "▦", active: true },
-    { label: "Pending AI Review", path: "#", icon: "⏳", count: pendingReview },
-    { label: "Resolved", path: "#", icon: "✓", count: resolved },
+    { label: "Dashboard", path: "/reviewer", icon: <Inbox size={16} />, active: true },
+    { label: "Pending AI Review", path: "#", icon: <ClipboardCheck size={16} />, count: pendingReview },
+    { label: "Resolved", path: "#", icon: <FileCheck size={16} />, count: resolved },
   ];
 
   return (
@@ -145,7 +152,8 @@ function ReviewerDashboard() {
                 onClick={loadGrievances}
                 disabled={loading}
               >
-                {loading ? "Refreshing..." : "↻ Refresh"}
+                <RefreshCw size={14} className={loading ? "spin-animation" : ""} />
+                <span>{loading ? "Refreshing..." : "Refresh"}</span>
               </button>
             </div>
           </section>
@@ -159,10 +167,10 @@ function ReviewerDashboard() {
           )}
 
           <section className="authority-stat-grid">
-            <StatCard icon="▤" title="Total Intake" value={total} subtitle="All grievances" variant="default" />
-            <StatCard icon="⏳" title="Pending Review" value={pendingReview} subtitle="Awaiting validation" variant="orange" />
-            <StatCard icon="⚡" title="AI Processing" value={aiProcessing} subtitle="Currently analyzing" variant="purple" />
-            <StatCard icon="✓" title="Resolved / Closed" value={resolved} subtitle="Redressed cases" variant="green" />
+            <StatCard icon={<Inbox size={18} />} title="Total Intake" value={total} subtitle="All grievances" variant="default" />
+            <StatCard icon={<ClipboardCheck size={18} />} title="Pending Review" value={pendingReview} subtitle="Awaiting validation" variant="orange" />
+            <StatCard icon={<Activity size={18} />} title="AI Processing" value={aiProcessing} subtitle="Currently analyzing" variant="purple" />
+            <StatCard icon={<FileCheck size={18} />} title="Resolved / Closed" value={resolved} subtitle="Redressed cases" variant="green" />
           </section>
 
           <section className="authority-content-card data-table-card">

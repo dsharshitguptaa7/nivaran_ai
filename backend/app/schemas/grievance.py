@@ -75,6 +75,17 @@ class AIReviewRequest(BaseModel):
     decision: AIReviewDecision
 
 
+class NextAuthorityResponse(BaseModel):
+    id: UUID
+    name: str
+    role: str
+    email: str | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
 class GrievanceRoutingResponse(BaseModel):
     can_forward: bool = False
     can_resolve: bool = False
@@ -84,6 +95,25 @@ class GrievanceRoutingResponse(BaseModel):
     next_authority_id: UUID | None = None
     next_authority_role: str | None = None
     next_authority_name: str | None = None
+    next_authority: NextAuthorityResponse | None = None
+
+
+class GrievanceHistoryItemResponse(BaseModel):
+    id: UUID
+    grievance_id: UUID
+    previous_status: GrievanceStatus | None = None
+    new_status: GrievanceStatus
+    status: str
+    event_type: str
+    changed_by: UUID | None = None
+    actor_name: str | None = None
+    actor_role: str | None = None
+    reason: str | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 
 # ============================================================

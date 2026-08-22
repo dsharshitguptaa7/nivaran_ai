@@ -1,3 +1,6 @@
+import React from "react";
+import { User, GraduationCap, BookOpen, Mail, Building2, BadgeCheck } from "lucide-react";
+
 export default function ApplicantInfoCard({ applicant, className = "" }) {
   const name = applicant?.full_name || "CSJMU Applicant";
   const phdRegNo = applicant?.phd_registration_number || "Not Registered";
@@ -7,9 +10,10 @@ export default function ApplicantInfoCard({ applicant, className = "" }) {
 
   return (
     <section className={`detail-card authority-applicant-card ${className}`}>
+      {/* CARD HEADER */}
       <div className="detail-card-header">
         <div className="detail-card-title-wrap">
-          <span className="applicant-card-icon">👤</span>
+          <User size={18} className="text-slate-700" />
           <div>
             <h2>Applicant Information</h2>
             <p>Research scholar credentials and academic identity</p>
@@ -17,51 +21,74 @@ export default function ApplicantInfoCard({ applicant, className = "" }) {
         </div>
         {applicant?.phd_registration_number ? (
           <span className="applicant-verified-badge" title="Verified PhD Scholar">
-            ✓ PhD SCHOLAR
+            <BadgeCheck size={13} className="text-emerald-700" />
+            <span>PhD SCHOLAR</span>
           </span>
         ) : (
           <span className="applicant-unverified-badge">GENERAL APPLICANT</span>
         )}
       </div>
 
-      <div className="detail-card-body" style={{ padding: "1.5rem" }}>
-        <div className="detail-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px 20px" }}>
+      {/* CARD BODY */}
+      <div className="detail-card-body">
+        <div className="detail-grid applicant-info-grid">
+          {/* Full Name */}
           <div className="detail-field">
-            <span>FULL NAME</span>
-            <strong style={{ fontSize: "15px", color: "var(--text-primary, #0f172a)" }}>{name}</strong>
+            <span className="detail-field-label">FULL NAME</span>
+            <strong className="detail-field-value text-slate-900">{name}</strong>
           </div>
 
+          {/* PhD Registration Number */}
           <div className="detail-field">
-            <span>PHD REGISTRATION NUMBER</span>
+            <span className="detail-field-label">PHD REGISTRATION NUMBER</span>
             <div>
               {applicant?.phd_registration_number ? (
-                <span className="phd-reg-pill">
-                  🪪 {phdRegNo}
+                <span className="phd-reg-pill font-mono">
+                  <GraduationCap size={12} />
+                  <span>{phdRegNo}</span>
                 </span>
               ) : (
-                <span style={{ color: "var(--text-muted, #94a3b8)", fontSize: "13px" }}>
+                <span className="text-slate-400 text-xs font-medium">
                   Not Registered
                 </span>
               )}
             </div>
           </div>
 
+          {/* Research Subject */}
           <div className="detail-field">
-            <span>RESEARCH SUBJECT</span>
-            <strong style={{ color: "var(--primary, #70162a)" }}>📚 {subjectName}</strong>
+            <span className="detail-field-label">RESEARCH SUBJECT</span>
+            <div className="flex-val-row">
+              <BookOpen size={13} className="text-slate-500" />
+              <strong className="detail-field-value text-slate-800">{subjectName}</strong>
+            </div>
           </div>
 
+          {/* Email */}
           {email && email !== "—" && (
             <div className="detail-field">
-              <span>EMAIL ADDRESS</span>
-              <span style={{ fontSize: "13px", color: "var(--text-secondary, #475569)" }}>✉️ {email}</span>
+              <span className="detail-field-label">EMAIL ADDRESS</span>
+              <div className="flex-val-row">
+                <Mail size={13} className="text-slate-500" />
+                <a
+                  href={`mailto:${email}`}
+                  className="applicant-email-link text-xs"
+                  title={`Email ${name}`}
+                >
+                  {email}
+                </a>
+              </div>
             </div>
           )}
 
+          {/* Department */}
           {department && (
             <div className="detail-field">
-              <span>DEPARTMENT / FACULTY</span>
-              <strong>{department}</strong>
+              <span className="detail-field-label">DEPARTMENT / FACULTY</span>
+              <div className="flex-val-row">
+                <Building2 size={13} className="text-slate-500" />
+                <strong className="detail-field-value text-slate-800">{department}</strong>
+              </div>
             </div>
           )}
         </div>
@@ -69,3 +96,4 @@ export default function ApplicantInfoCard({ applicant, className = "" }) {
     </section>
   );
 }
+

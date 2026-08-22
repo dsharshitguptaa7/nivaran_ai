@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { LogOut, ShieldCheck } from "lucide-react";
 import NotificationBell from "./NotificationBell";
 
 export default function AuthorityHeader({
@@ -13,23 +14,24 @@ export default function AuthorityHeader({
   return (
     <header className="authority-header">
       {/* BRAND / LOGO */}
-      <Link to={portalHome} className="authority-brand">
-        <div className="authority-brand-mark">N</div>
+      <Link to={portalHome} className="authority-brand" title="NIVARAN-AI Central Redressal System">
+        <div className="authority-brand-mark">
+          <ShieldCheck size={20} className="brand-shield-icon" />
+        </div>
         <div className="authority-brand-text">
           <strong>
-            NIVARAN<span>-AI</span>
+            NIVARAN<span className="brand-ai-tag">-AI</span>
           </strong>
-          <span>AI-Assisted Grievance Redressal System • CSJMU</span>
+          <span className="brand-institution-tag">Central Grievance Redressal • CSJMU</span>
         </div>
       </Link>
-
 
       {/* USER PROFILE, NOTIFICATIONS & LOGOUT */}
       <div className="authority-header-user">
         <NotificationBell userRole={userRole} />
 
         <div className="authority-user-info">
-          <strong>{userName}</strong>
+          <strong className="authority-user-name">{userName}</strong>
           <span className="authority-user-role-badge">{formattedRole}</span>
         </div>
 
@@ -37,16 +39,19 @@ export default function AuthorityHeader({
           {initial}
         </div>
 
-        <button
-          type="button"
-          className="authority-logout"
-          onClick={onLogout}
-          title="Sign out of portal"
-        >
-          <span>↪</span>
-          <span>Logout</span>
-        </button>
+        {onLogout && (
+          <button
+            type="button"
+            className="authority-logout"
+            onClick={onLogout}
+            title="Sign out of portal"
+          >
+            <LogOut size={15} className="logout-icon" />
+            <span>Logout</span>
+          </button>
+        )}
       </div>
     </header>
   );
 }
+

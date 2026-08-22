@@ -15,6 +15,8 @@ from app.models.category import Category, CategoryRoutingType
 from app.models.grievance import Grievance, GrievanceStatus
 from app.models.assignment import Assignment
 from app.models.documents import Document
+from app.schemas.assignment import AssignmentCreate
+from app.api.routes.assignment import assign_grievance
 from app.services.authority_routing import get_routing_response
 from app.services.grievance_workflow import change_grievance_status
 from app.services.escalation_service import escalate_grievance
@@ -405,10 +407,214 @@ def test_scenario_4_document_attachment_flow():
         db.close()
 
 
+def test_scenario_5_fixed_authority_forwarding_and_terminal_behavior():
+    """Test dynamic forwarding to a Fixed Authority (Fellowship -> Dr. Dipesh Kumar Verma)
+    and verify that forwarding is removed once at terminal authority.
+    """
+    db = SessionLocal()
+    try:
+        applicant, manager, dean = setup_test_environment(db)
+
+        # 1. Setup Dipesh Kumar Verma as Fixed Authority for Fellowship
+        dipesh = db.scalar(select(User).where(User.email == "dipesh.verma@nivaran.local"))
+        if not dipesh:
+            dipesh = User(
+                full_name="Dr. Dipesh Kumar Verma",
+                email="dipesh.verma@nivaran.local",
+                password_hash=hash_password("Admin@789"),
+                role=UserRole.ASSISTANT_DEAN,
+                is_active=True,
+            )
+            db.add(dipesh)
+            db.flush()
+
+        fellowship_cat = db.scalar(select(Category).where(Category.name == "Fellowship"))
+        if not fellowship_cat:
+            fellowship_cat = Category(
+                name="Fellowship",
+                routing_type=CategoryRoutingType.FIXED_AUTHORITY,
+                fixed_authority_id=dipesh.id,
+                is_active=True,
+            )
+            db.add(fellowship_cat)
+            db.flush()
+        else:
+            fellowship_cat.routing_type = CategoryRoutingType.FIXED_AUTHORITY
+            fellowship_cat.fixed_authority_id = dipesh.id
+            db.add(fellowship_cat)
+            db.flush()
+        db.commit()
+
+        # 2. Create Grievance
+        gid = f"E2E-FELL-{uuid.uuid4().hex[:6].upper()}"
+        grievance = Grievance(
+            grievance_id=gid,
+            title="Non-disbursement of monthly stipend",
+            description="My fellowship stipend has been delayed for 3 months.",
+            applicant_id=applicant.id,
+            subject_id=applicant.subject_id,
+            final_category_id=fellowship_cat.id,
+            category_reviewed=True,
+            status=GrievanceStatus.PENDING_REVIEW,
+        )
+        db.add(grievance)
+        db.commit()
+        db.refresh(grievance)
+
+        # 3. Manager views routing -> First authority is Subject Assistant Dean (Dr. Priyanka Maurya)
+        routing_mgr = get_routing_response(db, grievance, manager)
+        assert routing_mgr["can_forward"] is True
+        assert routing_mgr["next_authority_name"] == "Dr. Priyanka Maurya"
+
+        # Manager assigns to Dr. Priyanka Maurya via assign_grievance endpoint handler
+        priyanka = db.scalar(select(User).where(User.id == routing_mgr["next_authority_id"]))
+        assign_grievance(
+            grievance_id=grievance.grievance_id,
+            assignment_data=AssignmentCreate(assigned_to=priyanka.id, remarks="Initial assignment to subject dean"),
+            current_user=manager,
+            db=db,
+        )
+        db.refresh(grievance)
+        assert grievance.status == GrievanceStatus.ASSIGNED
+
+        # 4. Assistant Dean (Dr. Priyanka Maurya) views grievance:
+        # Dynamic lookup recognizes Fellowship is FIXED_AUTHORITY -> next authority is Dr. Dipesh Kumar Verma
+        routing_asst = get_routing_response(db, grievance, priyanka)
+        assert routing_asst["can_forward"] is True
+        assert routing_asst["next_authority_name"] == "Dr. Dipesh Kumar Verma"
+        assert routing_asst["next_authority_id"] == dipesh.id
+
+        # Assistant Dean forwards to Dr. Dipesh Kumar Verma
+        assign_grievance(
+            grievance_id=grievance.grievance_id,
+            assignment_data=AssignmentCreate(
+                assigned_to=dipesh.id,
+                remarks="Forwarded to Fellowship Nodal Officer for disbursement processing",
+            ),
+            current_user=priyanka,
+            db=db,
+        )
+        db.refresh(grievance)
+
+        # 5. Terminal Authority: Dr. Dipesh Kumar Verma views grievance
+        routing_terminal = get_routing_response(db, grievance, dipesh)
+        assert routing_terminal["can_forward"] is False, "Terminal authority must NOT have forwarding enabled"
+        assert routing_terminal["next_authority_id"] is None
+        assert routing_terminal["next_authority_name"] == None
+        assert routing_terminal["can_resolve"] is True
+
+        # Attempt to forward from terminal authority should raise HTTPException 400
+        from fastapi import HTTPException
+        try:
+            assign_grievance(
+                grievance_id=grievance.grievance_id,
+                assignment_data=AssignmentCreate(assigned_to=None, remarks="Illegal forward"),
+                current_user=dipesh,
+                db=db,
+            )
+            assert False, "Should have raised HTTPException when forwarding from terminal authority"
+        except HTTPException as exc:
+            assert exc.status_code == 400
+            assert "final mapped authority" in exc.detail
+
+        # 6. Verify complete forwarding history & audit log
+        from app.models.grievance_status_history import GrievanceStatusHistory
+        from app.models.audit_log import AuditLog
+
+        history = db.scalars(
+            select(GrievanceStatusHistory)
+            .where(GrievanceStatusHistory.grievance_id == grievance.id)
+            .order_by(GrievanceStatusHistory.created_at.asc())
+        ).all()
+
+        assert len(history) >= 2
+        # Verify initial assignment and forward entries
+        forward_history = [h for h in history if "Forwarded by" in (h.reason or "")]
+        assert len(forward_history) == 1
+        assert "Dr. Priyanka Maurya" in forward_history[0].reason
+        assert "Dr. Dipesh Kumar Verma" in forward_history[0].reason
+
+        # Verify AuditLog has GRIEVANCE_FORWARDED
+        forward_audits = db.scalars(
+            select(AuditLog)
+            .where(
+                AuditLog.grievance_id == grievance.id,
+                AuditLog.action == "GRIEVANCE_FORWARDED",
+            )
+        ).all()
+        assert len(forward_audits) == 1
+
+        # 7. Dr. Dipesh Kumar Verma resolves grievance
+        change_grievance_status(db, grievance, GrievanceStatus.RESOLVED, dipesh, "Fellowship arrears processed.")
+        grievance.resolution_notes = "Arrears credited to applicant bank account."
+        grievance.resolved_by_id = dipesh.id
+        db.commit()
+
+        # 8. Manager closes
+        change_grievance_status(db, grievance, GrievanceStatus.CLOSED, manager, "Closure verified.")
+        grievance.closure_remarks = "Stipend received confirmation by applicant."
+        grievance.closed_by_id = manager.id
+        db.commit()
+
+        print("[OK] Scenario 5: Fixed Authority Dynamic Forwarding & Terminal Removal PASSED")
+
+    finally:
+        db.close()
+
+
+def test_scenario_6_subject_category_terminal_removal():
+    """Test that a Subject Assistant Dean category (e.g. Fee) does NOT show forwarding to the Assistant Dean."""
+    db = SessionLocal()
+    try:
+        applicant, manager, dean = setup_test_environment(db)
+
+        fee_cat = db.scalar(select(Category).where(Category.name == "Fee"))
+        assert fee_cat is not None
+
+        gid = f"E2E-FEE-{uuid.uuid4().hex[:6].upper()}"
+        grievance = Grievance(
+            grievance_id=gid,
+            title="Fee Receipt Discrepancy",
+            description="Semester fee receipt not reflecting in ERP.",
+            applicant_id=applicant.id,
+            subject_id=applicant.subject_id,
+            final_category_id=fee_cat.id,
+            category_reviewed=True,
+            status=GrievanceStatus.PENDING_REVIEW,
+        )
+        db.add(grievance)
+        db.commit()
+        db.refresh(grievance)
+
+        # Manager assigns to Assistant Dean
+        routing_mgr = get_routing_response(db, grievance, manager)
+        priyanka = db.scalar(select(User).where(User.id == routing_mgr["next_authority_id"]))
+        assign_grievance(
+            grievance_id=grievance.grievance_id,
+            assignment_data=AssignmentCreate(assigned_to=priyanka.id),
+            current_user=manager,
+            db=db,
+        )
+        db.refresh(grievance)
+
+        # Assistant Dean views routing -> Should be terminal for SUBJECT_ASSISTANT_DEAN
+        routing_asst = get_routing_response(db, grievance, priyanka)
+        assert routing_asst["can_forward"] is False
+        assert routing_asst["next_authority_name"] is None
+        assert routing_asst["can_resolve"] is True
+
+        print("[OK] Scenario 6: Subject Category Terminal Removal PASSED")
+
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     print("\n--- RUNNING E2E GRIEVANCE PIPELINE & RESOLUTION TESTS ---\n")
     test_scenario_1_grievance_cluster_flow()
     test_scenario_2_subject_assistant_dean_flow()
     test_scenario_3_escalation_to_dean_and_closure()
     test_scenario_4_document_attachment_flow()
-    print("\nALL 4 PIPELINE SCENARIOS PASSED WITH ZERO ERRORS!\n")
+    test_scenario_5_fixed_authority_forwarding_and_terminal_behavior()
+    test_scenario_6_subject_category_terminal_removal()
+    print("\nALL 6 PIPELINE SCENARIOS PASSED WITH ZERO ERRORS!\n")
